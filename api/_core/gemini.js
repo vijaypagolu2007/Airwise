@@ -1,6 +1,6 @@
 // @ts-check
 // Minimal Gemini REST client (Google AI Studio free tier). Key stays server-side.
-const DEFAULT_MODEL = 'gemini-2.5-flash'
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite'
 const TIMEOUT_MS = 25000
 
 export const modelName = () => process.env.GEMINI_MODEL || DEFAULT_MODEL
