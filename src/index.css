@@ -1,0 +1,85 @@
+/* Design system: UI UX Pro Max → design-system/MASTER.md (Glassmorphism, sky + amber, Lora / Raleway) */
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Raleway:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-heading: "Lora", Georgia, serif;
+  --font-sans: "Raleway", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-primary: #0284c7;
+  --color-primary-strong: #0369a1; /* white text 5.9:1 */
+  --color-secondary: #0ea5e9;
+  --color-accent: #f59e0b;
+  --color-on-accent: #0f172a;
+  --color-background: #f0f9ff;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-muted: #eff7fb;
+  --color-muted-foreground: #475569;
+  --color-border: #d6e9f5;
+  --color-destructive: #dc2626;
+  --color-ring: #0284c7;
+}
+
+:root { color-scheme: light; }
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-foreground);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #bae6fd 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, #fde68a55 0%, transparent 55%),
+    var(--color-background);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-heading { font-family: var(--font-heading); }
+
+@layer components {
+  .glass {
+    background: rgb(255 255 255 / 0.62);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgb(255 255 255 / 0.7);
+    box-shadow: 0 8px 32px rgb(2 132 199 / 0.08);
+  }
+  .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(2 132 199 / 0.06);
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    border-radius: .75rem; padding: .625rem 1rem; font-weight: 600;
+    cursor: pointer; transition: background-color .2s, box-shadow .2s, transform .2s;
+  }
+  .btn:disabled { cursor: not-allowed; opacity: .6; }
+  .btn-primary { background: var(--color-primary-strong); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #075985; }
+  .btn-accent { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn-accent:hover:not(:disabled) { background: #d97706; }
+  .btn-ghost { background: var(--color-muted); color: var(--color-foreground); }
+  .btn-ghost:hover:not(:disabled) { background: #dbeefa; }
+}
+
+button, a, select, summary, [role="button"] { cursor: pointer; }
+
+:focus-visible {
+  outline: 3px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

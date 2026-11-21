@@ -1,0 +1,48 @@
+{
+  "name": "airwise",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AirWise — GenAI-powered urban air quality assistant (Prompt Wars Virtual Challenge 6)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "api": "node --env-file-if-exists=.env server.js",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p jsconfig.json",
+    "test:coverage": "vitest run --coverage",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0",
+    "recharts": "^3.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@tailwindcss/vite": "^4.1.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.13",
+    "@types/node": "^26.6.6",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/coverage-v8": "4.1.12",
+    "axe-core": "^4.14.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "jsdom": "^31.0.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0",
+    "vitest": "^4.0.0"
+  }
+}
