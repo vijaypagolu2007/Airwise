@@ -247,7 +247,7 @@ export function saveLang(l)
 ### `api/core/gemini.js`
 - `export async function callGeminiJson(prompt)`:
   - key = `process.env.GEMINI_API_KEY`; if missing → throw `new Error('NO_API_KEY')`.
-  - model = `process.env.GEMINI_MODEL || 'gemini-2.5-flash'`.
+  - model = `process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'`. On HTTP 429/5xx or a network error, one retry on `process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.1-flash-lite'`.
   - POST `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
     body `{ contents: [{ parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json', temperature: 0.7 } }`.
@@ -295,7 +295,7 @@ export function saveLang(l)
 
 ### `api/health.js` (Vercel function)
 - `export default async function handler(req, res)` → `{ ok:true, geminiConfigured:
-  !!process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' }`.
+  !!process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite' }`.
 
 ### `server.js` (local dev API server, project root)
 - Node http server on `127.0.0.1:8787` (port from `process.env.PORT || 8787`).

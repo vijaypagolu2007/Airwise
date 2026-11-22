@@ -125,5 +125,5 @@ export async function handleChat(body) {
 }
 
 export function handleHealth() {
-  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, model: modelName() } }
+  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, model: /^[a-z0-9.-]+$/i.test(modelName()) ? modelName() : 'INVALID_MODEL_NAME' } }
 }

@@ -32,7 +32,7 @@ const advice = (over = {}) => ({
 /** Mock Gemini's REST API with a model text reply. */
 function mockGemini(text, status = 200) {
   const body = JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body, { status }))
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(body, { status }))
 }
 
 describe('Gemini path (mocked fetch)', () => {

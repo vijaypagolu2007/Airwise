@@ -9,8 +9,14 @@ import { API_HEADERS, runPost } from './http.js'
 export function vercelPost(scope, handler) {
   /** @param {any} req @param {any} res */
   return async function (req, res) {
-    // Vercel pre-parses JSON bodies; when it hasn't, the request itself is the stream.
-    const body = req.body !== undefined ? req.body : req
+    let body
+    try {
+      // Vercel pre-parses JSON bodies; when it hasn't, the request itself is the stream.
+      body = req.body !== undefined ? req.body : req
+    } catch {
+      // Vercel's body getter throws on malformed JSON: answer with our own error instead of an empty 400.
+      body = '\u0000invalid'
+    }
     const out = await runPost({ method: req.method, headers: req.headers, body, ip: req.socket?.remoteAddress }, scope, handler)
     for (const [k, v] of Object.entries({ ...API_HEADERS, ...out.headers })) res.setHeader(k, v)
     res.statusCode = out.status

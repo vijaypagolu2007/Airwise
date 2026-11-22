@@ -1,9 +1,16 @@
 // @ts-check
 // Minimal Gemini REST client (Google AI Studio free tier). Key stays server-side.
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite'
+const DEFAULT_FALLBACK_MODEL = 'gemini-3.1-flash-lite'
 const TIMEOUT_MS = 25000
+/** Overloaded, rate-limited or flaky upstream: worth one more try on another model. */
+const RETRYABLE = /^GEMINI_(HTTP_(429|500|502|503|504)|NETWORK)$/
 
 export const modelName = () => process.env.GEMINI_MODEL || DEFAULT_MODEL
+export const fallbackModelName = () => process.env.GEMINI_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL
+
+/** The model sometimes mangles the superscript in µg/m³; put it back. @param {string} t */
+export const fixUnits = (t) => t.replace(/µg\/m(?:_+|\^?3)(?![\d³])/g, 'µg/m³')
 
 /** @param {string} text */
 function stripFences(text) {
@@ -15,14 +22,15 @@ function stripFences(text) {
 }
 
 /**
+ * @param {string} model
  * @param {string} prompt
  * @param {Record<string, unknown>} generationConfig
  * @returns {Promise<{ text: string, raw: string }>}
  */
-async function call(prompt, generationConfig) {
+async function callModel(model, prompt, generationConfig) {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('NO_API_KEY')
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName()}:generateContent`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
@@ -50,9 +58,26 @@ async function call(prompt, generationConfig) {
   }
   const parts = body?.candidates?.[0]?.content?.parts
   if (!Array.isArray(parts) || parts.length === 0) throw new Error('GEMINI_EMPTY')
-  const text = stripFences(parts.map((/** @type {{ text?: string }} */ p) => p.text || '').join(''))
+  const text = fixUnits(stripFences(parts.map((/** @type {{ text?: string }} */ p) => p.text || '').join('')))
   if (!text) throw new Error('GEMINI_EMPTY')
   return { text, raw: bodyText }
+}
+
+/**
+ * Primary model first; on an overload, rate limit or network error, one try on the fallback model.
+ * @param {string} prompt
+ * @param {Record<string, unknown>} generationConfig
+ * @returns {Promise<{ text: string, raw: string }>}
+ */
+async function call(prompt, generationConfig) {
+  try {
+    return await callModel(modelName(), prompt, generationConfig)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const fb = fallbackModelName()
+    if (!RETRYABLE.test(msg) || !fb || fb === modelName()) throw e
+    return await callModel(fb, prompt, generationConfig)
+  }
 }
 
 /** JSON-mode call: returns { text, raw }. */
