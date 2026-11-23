@@ -4,7 +4,6 @@ GenAI assistant that helps families and communities get through winter smog.
 It reads **live air quality** for your city, learns your **household and lifestyle**, and uses **Google Gemini** to plan a
 low-exposure, low-emission day — with the **impact of every choice in numbers**.
 
-Built for **Prompt Wars Virtual Challenge 6**. 100% free-tier stack.
 
 ## UI
 Dashboard with a side menu (drawer on mobile), one screen per section: Overview, Forecast, Daily routine, Indoor hacks, Swaps & impact, Exposure meter, Ask AirWise, AI inspector, Profile & city.
