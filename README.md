@@ -56,7 +56,7 @@ Browser (React)
 ```
 
 ## Run locally (Windows / macOS / Linux)
-Requires Node 20+ and pnpm (`npm i -g pnpm`).
+Requires Node 22.19+ and pnpm (`npm i -g pnpm`).
 ```bash
 pnpm install
 pnpm approve-builds          # allow esbuild
@@ -70,9 +70,15 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build:
 ```bash
-pnpm verify     # lint + typecheck + 128 tests with coverage + build
+pnpm verify     # lint + typecheck + 138 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
+
+Screenshots and the demo GIF (optional; needs Playwright and ffmpeg):
+```bash
+pnpm add -D playwright && pnpm exec playwright install chromium
+pnpm capture
+```
 
 ## Test cases for the demo
 | Case | Input | Expected |

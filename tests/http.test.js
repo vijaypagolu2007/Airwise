@@ -51,3 +51,26 @@ describe('http helpers', () => {
     expect(r).toEqual({ status: 500, body: { ok: false, error: 'INTERNAL' } })
   })
 })
+
+describe('origin check', () => {
+  beforeEach(() => { resetRateLimits(); process.env.AIRWISE_SILENT_LOGS = '1'; delete process.env.ALLOWED_ORIGINS })
+
+  it('allows same host, no origin, localhost and ALLOWED_ORIGINS; blocks other sites', async () => {
+    const { originAllowed } = await import('../api/_core/http.js')
+    expect(originAllowed({})).toBe(true)
+    expect(originAllowed({ origin: 'https://airwise-beta.vercel.app', host: 'airwise-beta.vercel.app' })).toBe(true)
+    expect(originAllowed({ origin: 'http://localhost:5173', host: '127.0.0.1:8787' })).toBe(true)
+    expect(originAllowed({ origin: 'https://evil.example', host: 'airwise-beta.vercel.app' })).toBe(false)
+    expect(originAllowed({ origin: 'not a url', host: 'x' })).toBe(false)
+    process.env.ALLOWED_ORIGINS = 'https://friend.example'
+    expect(originAllowed({ origin: 'https://friend.example', host: 'airwise-beta.vercel.app' })).toBe(true)
+  })
+
+  it('runPost answers 403 FORBIDDEN_ORIGIN before touching the handler', async () => {
+    let called = false
+    const r = await runPost(req({ headers: { origin: 'https://evil.example', host: 'a.app' } }), 'chat', async () => { called = true; return { status: 200, body: {} } })
+    expect(r.status).toBe(403)
+    expect(r.body).toEqual({ ok: false, error: 'FORBIDDEN_ORIGIN' })
+    expect(called).toBe(false)
+  })
+})

@@ -3,6 +3,10 @@
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite'
 const DEFAULT_FALLBACK_MODEL = 'gemini-3.1-flash-lite'
 const TIMEOUT_MS = 25000
+/** Whole budget across retries, so the rule-based fallback always answers before Vercel's function limit. */
+const TOTAL_BUDGET_MS = 20000
+/** Not worth starting another attempt with less time than this left. */
+const MIN_ATTEMPT_MS = 3000
 /** Overloaded, rate-limited or flaky upstream: worth one more try on another model. */
 const RETRYABLE = /^GEMINI_(HTTP_(429|500|502|503|504)|NETWORK)$/
 
@@ -25,15 +29,16 @@ function stripFences(text) {
  * @param {string} model
  * @param {string} prompt
  * @param {Record<string, unknown>} generationConfig
+ * @param {number} [timeoutMs]
  * @returns {Promise<{ text: string, raw: string }>}
  */
-async function callModel(model, prompt, generationConfig) {
+async function callModel(model, prompt, generationConfig, timeoutMs = TIMEOUT_MS) {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('NO_API_KEY')
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => ctrl.abort(), Math.max(1, timeoutMs))
   let res
   try {
     res = await fetch(url, {
@@ -76,19 +81,23 @@ async function callModel(model, prompt, generationConfig) {
  * @returns {Promise<{ text: string, raw: string }>}
  */
 async function call(prompt, generationConfig) {
+  const deadline = Date.now() + Number(process.env.GEMINI_BUDGET_MS ?? TOTAL_BUDGET_MS)
+  const left = () => Math.min(TIMEOUT_MS, deadline - Date.now())
   try {
-    return await callModel(modelName(), prompt, generationConfig)
+    return await callModel(modelName(), prompt, generationConfig, left())
   } catch (e0) {
     let e = e0
     // A 503 is usually a brief overload: wait a moment and try the same model once more.
     if (e instanceof Error && e.message === 'GEMINI_HTTP_503') {
       await new Promise((r) => setTimeout(r, Number(process.env.GEMINI_RETRY_MS ?? 800)))
-      try { return await callModel(modelName(), prompt, generationConfig) } catch (e1) { e = e1 }
+      if (left() >= MIN_ATTEMPT_MS) {
+        try { return await callModel(modelName(), prompt, generationConfig, left()) } catch (e1) { e = e1 }
+      }
     }
     const msg = e instanceof Error ? e.message : String(e)
     const fb = fallbackModelName()
-    if (!RETRYABLE.test(msg) || !fb || fb === modelName()) throw e
-    return await callModel(fb, prompt, generationConfig)
+    if (!RETRYABLE.test(msg) || !fb || fb === modelName() || left() < MIN_ATTEMPT_MS) throw e
+    return await callModel(fb, prompt, generationConfig, left())
   }
 }
 

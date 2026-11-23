@@ -103,13 +103,24 @@ export default function Layout({ children }) {
   const { pathname } = useLocation()
   const current = ALL.find((i) => pathname.startsWith(i.to))
   const closeRef = useRef(null)
+  const drawerRef = useRef(null)
   const menuButtonRef = useRef(null)
   useEffect(() => { document.getElementById('main')?.scrollTo(0, 0) }, [pathname])
   // Drawer: focus the close button on open, Escape closes, focus returns to the menu button.
   useEffect(() => {
     if (!open) return
     closeRef.current?.focus()
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    const onKey = (e) => {
+      if (e.key === 'Escape') return setOpen(false)
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      // Keep Tab / Shift+Tab inside the open drawer.
+      const items = [...drawerRef.current.querySelectorAll('a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])')]
+      if (!items.length) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
     document.addEventListener('keydown', onKey)
     const trigger = menuButtonRef.current
     return () => { document.removeEventListener('keydown', onKey); trigger?.focus() }
@@ -133,7 +144,7 @@ export default function Layout({ children }) {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+        <div ref={drawerRef} className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-slate-900/40" onClick={() => setOpen(false)} />
           <aside className="glass absolute inset-y-0 left-0 w-72 !bg-white/95">
             <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-3 top-4 rounded-lg p-2 hover:bg-slate-100" aria-label="Close menu"><X size={22} /></button>
@@ -142,7 +153,7 @@ export default function Layout({ children }) {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col" inert={open || undefined}>
         <header className="glass sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:px-8">
           <button ref={menuButtonRef} onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-white lg:hidden" aria-label="Open menu" aria-expanded={open}><List size={24} /></button>
           <h1 className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">

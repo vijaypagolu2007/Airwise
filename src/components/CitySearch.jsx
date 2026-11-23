@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { searchCity } from '../lib/geocode.js'
 import { useAirwise, errorMessage } from '../context/AirwiseContext.jsx'
 
 export default function CitySearch({ onLoaded, compact = false }) {
   const { loadPlace, airLoading, airError, city } = useAirwise()
+  const uid = useId()
+  const inputId = `city-${uid}`
+  const errorId = `city-error-${uid}`
   const [q, setQ] = useState(city || '')
   const [results, setResults] = useState([])
   const [error, setError] = useState(null)
@@ -40,15 +43,15 @@ export default function CitySearch({ onLoaded, compact = false }) {
   return (
     <div className="relative">
       <form onSubmit={onSubmit} className="flex gap-2" noValidate>
-        <label htmlFor="city" className="sr-only">City</label>
+        <label htmlFor={inputId} className="sr-only">City</label>
         <input
-          id="city"
+          id={inputId}
           value={q}
           onChange={(e) => { setQ(e.target.value); setError(null) }}
           placeholder={compact && city ? `Change city (now ${city})` : "Type your city, e.g. Delhi"}
           className={`w-full rounded-xl border bg-white ${compact ? 'px-3 py-2' : 'px-4 py-3 text-lg'} outline-none focus:ring-2 focus:ring-ring ${shown ? 'border-red-400' : 'border-slate-300'}`}
           aria-invalid={!!shown}
-          aria-describedby="city-error"
+          aria-describedby={shown ? errorId : undefined}
           autoComplete="off"
         />
         <button
@@ -59,7 +62,7 @@ export default function CitySearch({ onLoaded, compact = false }) {
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" /><span className={compact ? 'sr-only' : ''}>{searching || airLoading ? 'Loading…' : 'Search'}</span>
         </button>
       </form>
-      {shown && <p id="city-error" className="mt-2 text-sm font-medium text-red-600">{errorMessage(shown)}</p>}
+      {shown && <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-red-600">{errorMessage(shown)}</p>}
       {results.length > 1 && (
         <ul className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
           {results.map((r) => (

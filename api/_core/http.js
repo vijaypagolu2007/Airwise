@@ -50,6 +50,25 @@ export function clientIp(headers, socketAddress) {
 }
 
 /**
+ * Browsers always send Origin on cross-site POSTs. Allow same-host requests, ALLOWED_ORIGINS (comma-separated),
+ * and requests with no Origin (curl, server-to-server: still rate-limited). Blocks other sites from spending the quota
+ * through a visitor's browser.
+ * @param {Record<string, string | string[] | undefined>} headers
+ */
+export function originAllowed(headers) {
+  const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
+  const origin = one(headers.origin).trim()
+  if (!origin) return true
+  let host, hostname
+  try { ({ host, hostname } = new URL(origin)) } catch { return false }
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return true // local dev via the Vite proxy
+  const own = one(headers['x-forwarded-host']) || one(headers.host)
+  if (own && host === own.trim()) return true
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
+  return allowed.includes(origin)
+}
+
+/**
  * Read and parse a JSON request body from a Node stream, aborting once it passes MAX_BODY_BYTES.
  * @param {AsyncIterable<Buffer>} stream
  * @returns {Promise<{ ok: true, value: unknown } | { ok: false, error: 'BODY_TOO_LARGE' | 'INVALID_JSON' }>}
@@ -97,6 +116,10 @@ export function log(route, event, fields = {}) {
  */
 export async function runPost(req, scope, handler) {
   if (req.method !== 'POST') return { status: 405, body: { ok: false, error: 'METHOD_NOT_ALLOWED' }, headers: { Allow: 'POST' } }
+  if (!originAllowed(req.headers)) {
+    log(scope, 'origin_blocked')
+    return { status: 403, body: { ok: false, error: 'FORBIDDEN_ORIGIN' } }
+  }
   const ip = clientIp(req.headers, req.ip)
   const rl = checkRateLimit(scope, ip)
   if (!rl.ok) {

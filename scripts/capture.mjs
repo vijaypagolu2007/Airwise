@@ -1,12 +1,20 @@
-import { chromium } from 'playwright'
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, statSync, rmSync, mkdtempSync, readdirSync, renameSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 
+// Optional tool: Playwright is not a project dependency (keeps installs small).
+// One-time setup: pnpm add -D playwright && pnpm exec playwright install chromium   (ffmpeg on PATH for the GIF)
+let chromium
+try {
+  ;({ chromium } = await import('playwright'))
+} catch {
+  console.error('scripts/capture.mjs needs Playwright: pnpm add -D playwright && pnpm exec playwright install chromium')
+  process.exit(1)
+}
+
 const BASE_URL = 'https://airwise-beta.vercel.app'
-const USER_AGENT =
-  'Mozilla/5.0 (compatible; Google-Agent; +https://developers.google.com/crawling/docs/crawlers-fetchers/google-agent)'
+const USER_AGENT = 'AirWise-capture/1.0'
 const OUT_DIR = resolve('docs/media')
 const MAX_PNG_BYTES = 500 * 1024
 const MAX_GIF_BYTES = 5 * 1024 * 1024

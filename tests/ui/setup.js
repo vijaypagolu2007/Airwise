@@ -5,7 +5,10 @@ import axe from 'axe-core'
 afterEach(() => cleanup())
 
 // jsdom has no layout engine, so scrolling is a no-op.
-if (typeof window !== 'undefined') window.HTMLElement.prototype.scrollIntoView = function () {}
+if (typeof window !== 'undefined') {
+  window.HTMLElement.prototype.scrollIntoView = function () {}
+  window.HTMLElement.prototype.scrollTo = function () {}
+}
 
 /** Run axe on a rendered container; color-contrast needs real layout, which jsdom lacks. */
 export async function axeViolations(container) {

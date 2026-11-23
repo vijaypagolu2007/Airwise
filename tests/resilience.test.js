@@ -43,6 +43,15 @@ describe('model fallback', () => {
     expect(f).toHaveBeenCalledTimes(1)
   })
 
+  it('stops retrying once the total time budget is spent', async () => {
+    process.env.GEMINI_BUDGET_MS = '2000' // below the 3 s minimum for another attempt
+    const f = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}', { status: 503 }))
+    const r = await handleChat(chatReq())
+    delete process.env.GEMINI_BUDGET_MS
+    expect(r.body.source).toBe('fallback')
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+
   it('falls back to rule-based text when both models fail', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{}', { status: 503 }))
     const r = await handleChat(chatReq())

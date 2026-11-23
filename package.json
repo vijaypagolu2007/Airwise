@@ -3,9 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "AirWise — GenAI-powered urban air quality assistant (Prompt Wars Virtual Challenge 6)",
+  "description": "AirWise — GenAI-powered urban air quality assistant",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.19"
   },
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p jsconfig.json",
     "test:coverage": "vitest run --coverage",
+    "capture": "node scripts/capture.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build"
   },
   "dependencies": {

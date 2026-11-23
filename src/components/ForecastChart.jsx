@@ -1,12 +1,14 @@
+import { useMemo } from 'react'
 import { ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ReferenceDot, ReferenceLine } from 'recharts'
 import { bestHour, worstHour } from '../lib/airApi.js'
 
 const lbl = (e) => (e ? `${e.time.slice(8, 10)}/${e.time.slice(11, 13)}h` : null)
 
 export default function ForecastChart({ hourly, height = 'h-80' }) {
-  const data = hourly.map((e) => ({ ...e, label: lbl(e) }))
-  const best = bestHour(hourly)
-  const worst = worstHour(hourly)
+  const { data, best, worst } = useMemo(
+    () => ({ data: hourly.map((e) => ({ ...e, label: lbl(e) })), best: bestHour(hourly), worst: worstHour(hourly) }),
+    [hourly],
+  )
   return (
     <div className={`${height} w-full`} role="img" aria-label={`48-hour forecast. Cleanest hour ${best?.time.slice(11, 16)} at ${best?.pm25} µg/m³, worst ${worst?.time.slice(11, 16)} at ${worst?.pm25} µg/m³.`}>
       <ResponsiveContainer>
@@ -24,8 +26,8 @@ export default function ForecastChart({ hourly, height = 'h-80' }) {
           <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #d6e9f5' }} />
           <Legend wrapperStyle={{ fontSize: 13 }} />
           <ReferenceLine yAxisId="pm" y={15} stroke="#16a34a" strokeDasharray="2 4" label={{ value: 'WHO 15', fontSize: 10, fill: '#15803d', position: 'insideTopLeft' }} />
-          <Area yAxisId="pm" type="monotone" dataKey="pm25" name="PM2.5 (µg/m³)" stroke="#0284c7" strokeWidth={2.5} fill="url(#pmFill)" />
-          <Line yAxisId="aqi" type="monotone" dataKey="aqi" name="AQI (dashed)" stroke="#d97706" strokeWidth={2} dot={false} strokeDasharray="6 4" />
+          <Area yAxisId="pm" type="monotone" dataKey="pm25" name="PM2.5 (µg/m³)" stroke="#0284c7" strokeWidth={2.5} fill="url(#pmFill)" isAnimationActive={false} />
+          <Line yAxisId="aqi" type="monotone" dataKey="aqi" name="AQI (dashed)" stroke="#d97706" strokeWidth={2} dot={false} strokeDasharray="6 4" isAnimationActive={false} />
           {best && <ReferenceDot yAxisId="pm" x={lbl(best)} y={best.pm25} r={7} fill="#16a34a" stroke="white" strokeWidth={2} label={{ value: 'Cleanest', position: 'top', fontSize: 11 }} />}
           {worst && <ReferenceDot yAxisId="pm" x={lbl(worst)} y={worst.pm25} r={7} fill="#dc2626" stroke="white" strokeWidth={2} label={{ value: 'Worst', position: 'top', fontSize: 11 }} />}
         </ComposedChart>

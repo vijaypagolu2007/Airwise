@@ -3,7 +3,8 @@ import { COMMUTE_MODES, FUELS } from '../lib/defaults.js'
 import { validateProfile } from '../lib/validate.js'
 import { UsersThree, Train, House, PersonSimpleWalk } from '@phosphor-icons/react'
 
-const label = (s) => s.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase())
+const ACRONYMS = { lpg: 'LPG', ac: 'AC', ev: 'EV', cng: 'CNG' }
+const label = (s) => ACRONYMS[s] ?? s.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase())
 const fieldCls = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring'
 
 function Num({ id, text, value, onChange, error, step = 1 }) {
