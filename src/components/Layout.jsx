@@ -145,7 +145,7 @@ export default function Layout({ children }) {
       {/* Mobile drawer */}
       {open && (
         <div ref={drawerRef} className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/40" aria-hidden="true" onClick={() => setOpen(false)} />
           <aside className="glass absolute inset-y-0 left-0 w-72 !bg-white/95">
             <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-3 top-4 rounded-lg p-2 hover:bg-slate-100" aria-label="Close menu"><X size={22} /></button>
             {sidebar}

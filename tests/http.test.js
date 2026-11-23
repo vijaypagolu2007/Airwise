@@ -61,6 +61,10 @@ describe('origin check', () => {
     expect(originAllowed({ origin: 'https://airwise-beta.vercel.app', host: 'airwise-beta.vercel.app' })).toBe(true)
     expect(originAllowed({ origin: 'http://localhost:5173', host: '127.0.0.1:8787' })).toBe(true)
     expect(originAllowed({ origin: 'https://evil.example', host: 'airwise-beta.vercel.app' })).toBe(false)
+    const env = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    expect(originAllowed({ origin: 'http://localhost:5173', host: 'airwise-beta.vercel.app' })).toBe(false)
+    process.env.NODE_ENV = env
     expect(originAllowed({ origin: 'not a url', host: 'x' })).toBe(false)
     process.env.ALLOWED_ORIGINS = 'https://friend.example'
     expect(originAllowed({ origin: 'https://friend.example', host: 'airwise-beta.vercel.app' })).toBe(true)

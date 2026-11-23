@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { cloneElement } from 'react'
 import { render, screen } from '@testing-library/react'
+// jsdom has no layout, so give the chart a fixed size instead of measuring 0×0.
+vi.mock('recharts', async (orig) => ({
+  ...(await orig()),
+  ResponsiveContainer: ({ children }) => cloneElement(children, { width: 800, height: 320 }),
+}))
 import ForecastChart, { ForecastTable } from '../../src/components/ForecastChart.jsx'
 import './setup.js'
 

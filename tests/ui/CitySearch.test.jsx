@@ -6,9 +6,11 @@ import { axeViolations } from './setup.js'
 
 vi.mock('../../src/context/AirwiseContext.jsx', async (orig) => ({
   ...(await orig()),
-  useAirwise: () => ({ loadPlace: vi.fn(), airLoading: false, airError: null, city: '' }),
+  useAirwise: () => ({ loadPlace, airLoading: false, airError: null, city: '' }),
 }))
-vi.mock('../../src/lib/geocode.js', () => ({ searchCity: vi.fn(async () => { throw new Error('CITY_NOT_FOUND') }) }))
+const loadPlace = vi.fn(async () => true)
+const searchCity = vi.fn(async () => { throw new Error('CITY_NOT_FOUND') })
+vi.mock('../../src/lib/geocode.js', () => ({ searchCity: (...a) => searchCity(...a) }))
 
 const { default: CitySearch } = await import('../../src/components/CitySearch.jsx')
 
@@ -38,5 +40,30 @@ describe('CitySearch', () => {
     render(<CitySearch />)
     await userEvent.type(screen.getByLabelText('City'), 'asdfgh{Enter}')
     expect((await screen.findByRole('alert')).textContent).toMatch(/City not found/)
+  })
+
+  it('lists several matches, then loads the one picked', async () => {
+    const onLoaded = vi.fn()
+    const hyd = { name: 'Hyderabad', admin1: 'Telangana', country: 'India', latitude: 17.38, longitude: 78.48 }
+    const sindh = { name: 'Hyderabad', admin1: 'Sindh', country: 'Pakistan', latitude: 25.39, longitude: 68.37 }
+    searchCity.mockResolvedValueOnce([hyd, sindh])
+    render(<CitySearch onLoaded={onLoaded} />)
+    await userEvent.type(screen.getByLabelText('City'), 'Hyderabad{Enter}')
+    await userEvent.click(await screen.findByRole('button', { name: /Telangana/ }))
+    expect(loadPlace).toHaveBeenCalledWith(hyd)
+    expect(onLoaded).toHaveBeenCalledWith(hyd)
+    expect(screen.queryByRole('button', { name: /Sindh/ })).toBeNull()
+  })
+
+  it('loads straight away when there is one match, and rejects a one-letter query', async () => {
+    const delhi = { name: 'Delhi', country: 'India', latitude: 28.6, longitude: 77.2 }
+    searchCity.mockResolvedValueOnce([delhi])
+    render(<CitySearch />)
+    const input = screen.getByLabelText('City')
+    await userEvent.type(input, 'x{Enter}')
+    expect(screen.getByRole('alert').textContent).toMatch(/City not found/)
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Delhi{Enter}')
+    expect(loadPlace).toHaveBeenCalledWith(delhi)
   })
 })

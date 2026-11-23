@@ -95,7 +95,7 @@ async function saveScreenshot(page, filename, ffmpegAvailable) {
 
 async function searchCityInMain(page, cityQuery, { pickFirst = true } = {}) {
   const main = page.locator('main')
-  const input = main.locator('input#city').first()
+  const input = main.getByLabel('City').first()
   await input.waitFor({ state: 'visible', timeout: 15_000 })
   await input.fill(cityQuery)
 

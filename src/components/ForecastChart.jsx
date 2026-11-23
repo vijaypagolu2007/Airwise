@@ -11,7 +11,7 @@ export default function ForecastChart({ hourly, height = 'h-80' }) {
   )
   return (
     <div className={`${height} w-full`} role="img" aria-label={`48-hour forecast. Cleanest hour ${best?.time.slice(11, 16)} at ${best?.pm25} µg/m³, worst ${worst?.time.slice(11, 16)} at ${worst?.pm25} µg/m³.`}>
-      <ResponsiveContainer>
+      <ResponsiveContainer initialDimension={{ width: 800, height: 320 }}>
         <ComposedChart data={data} margin={{ top: 16, right: 8, left: -12, bottom: 0 }}>
           <defs>
             <linearGradient id="pmFill" x1="0" y1="0" x2="0" y2="1">

@@ -61,7 +61,8 @@ export function originAllowed(headers) {
   if (!origin) return true
   let host, hostname
   try { ({ host, hostname } = new URL(origin)) } catch { return false }
-  if (hostname === 'localhost' || hostname === '127.0.0.1') return true // local dev via the Vite proxy
+  const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1'
+  if (isLoopback && process.env.NODE_ENV !== 'production') return true // local dev via the Vite proxy
   const own = one(headers['x-forwarded-host']) || one(headers.host)
   if (own && host === own.trim()) return true
   const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)

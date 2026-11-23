@@ -70,7 +70,7 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build:
 ```bash
-pnpm verify     # lint + typecheck + 138 tests with coverage + build
+pnpm verify     # lint + typecheck + 140 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 

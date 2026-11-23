@@ -89,8 +89,9 @@ async function call(prompt, generationConfig) {
     let e = e0
     // A 503 is usually a brief overload: wait a moment and try the same model once more.
     if (e instanceof Error && e.message === 'GEMINI_HTTP_503') {
-      await new Promise((r) => setTimeout(r, Number(process.env.GEMINI_RETRY_MS ?? 800)))
-      if (left() >= MIN_ATTEMPT_MS) {
+      const retryMs = Number(process.env.GEMINI_RETRY_MS ?? 800)
+      if (left() >= MIN_ATTEMPT_MS + retryMs) {
+        await new Promise((r) => setTimeout(r, retryMs))
         try { return await callModel(modelName(), prompt, generationConfig, left()) } catch (e1) { e = e1 }
       }
     }
