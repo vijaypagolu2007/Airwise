@@ -4,12 +4,19 @@ GenAI assistant that helps families and communities get through winter smog.
 It reads **live air quality** for your city, learns your **household and lifestyle**, and uses **Google Gemini** to plan a
 low-exposure, low-emission day — with the **impact of every choice in numbers**.
 
-
 **Live demo:** https://airwise-beta.vercel.app
 
-## UI
-Dashboard with a side menu (drawer on mobile), one screen per section: Overview, Forecast, Daily routine, Indoor hacks, Swaps & impact, Exposure meter, Ask AirWise, AI inspector, Profile & city.
-Design system generated with [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (`design-system/MASTER.md`): Glassmorphism, sky + amber palette, Lora / Raleway, Phosphor icons, 4.5:1 contrast, visible focus, reduced-motion support.
+![AirWise demo](docs/media/demo.gif)
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Overview: live CPCB AQI](docs/media/overview.png)<br>*Overview: live CPCB AQI* | ![Forecast: cleanest vs worst hours](docs/media/forecast.png)<br>*Forecast: cleanest vs worst hours* |
+| ![Daily routine: Gemini plan](docs/media/routine.png)<br>*Daily routine: Gemini plan* | ![Swaps: CO2 and rupee impact](docs/media/swaps.png)<br>*Swaps: CO2 and rupee impact* |
+| ![Exposure meter](docs/media/exposure.png)<br>*Exposure meter* | ![Ask AirWise: grounded chat](docs/media/chat.png)<br>*Ask AirWise: grounded chat* |
+| ![AI inspector: prompt and raw Gemini JSON](docs/media/inspector.png)<br>*AI inspector: prompt and raw Gemini JSON* | ![Error handling: city not found](docs/media/error-city.png)<br>*Error handling: city not found* |
+| ![Mobile layout](docs/media/mobile.png)<br>*Mobile layout* | |
 
 ## Features
 | # | Feature | Where |
@@ -30,13 +37,13 @@ Design system generated with [UI UX Pro Max](https://github.com/nextlevelbuilder
 - The server never trusts client numbers: it validates the profile, recomputes the AQI and every impact figure (`groundInput` in `api/_core/handlers.js`), fences all user text in the prompt and returns only coarse error codes.
 - `POST /api/advise` sends Gemini one structured prompt: live AQI + 24 h forecast + profile + **code-computed impact numbers**.
   Gemini returns strict JSON (`summary`, `risk_level`, `routine`, `indoor_hacks`, `swaps`) validated with **zod**.
-- `POST /api/chat` answers follow-up questions (temperature 0.5, uncached, so answers change with the question).
-- Hindi / Telugu: the same Gemini call also returns a translated summary and top 3 actions (no second call).
+- `POST /api/chat` answers follow-up questions (temperature 0.5, uncached, so answers change with the question and data).
+- Hindi / Telugu: the same Gemini call returns the translated summary and top actions.
 - **Numbers never come from the AI.** Exposure, CO₂ and ₹ figures are computed in `src/lib/impact.js`; Gemini only explains them.
-- **Never breaks:** no key, quota hit, timeout or invalid JSON → rule-based fallback (`src/lib/fallback.js`) in the same shape.
+- **Never breaks:** a 503 is retried, then a fallback model is tried; if there's still no valid answer (no key, quota hit, timeout or invalid JSON), it falls back to the rule-based plan (`src/lib/fallback.js`) in the same shape. Small slips in the model's JSON are repaired before validation.
 
-## Tech stack (all free)
-React 19 + Vite 7 + Tailwind 4 · Phosphor icons · Recharts · zod · Gemini 3.5 Flash-Lite with 3.1 Flash-Lite fallback (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs (no key) · Vercel functions · localStorage
+## Tech stack
+React 19 + Vite 7 + Tailwind 4 · Phosphor icons · Recharts · zod · Gemini 3.5 Flash-Lite with 3.1 Flash-Lite fallback (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs · Vercel functions · localStorage
 
 ## Architecture
 ```
@@ -54,7 +61,7 @@ Requires Node 20+ and pnpm (`npm i -g pnpm`).
 pnpm install
 pnpm approve-builds          # allow esbuild
 cp .env.example .env         # Windows: copy .env.example .env
-# put your free key from https://aistudio.google.com/apikey into GEMINI_API_KEY
+# put your key from https://aistudio.google.com/apikey into GEMINI_API_KEY
 ```
 Two terminals:
 ```bash
@@ -63,15 +70,9 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build:
 ```bash
-pnpm test       # 45 unit tests
-pnpm build
+pnpm verify     # lint + typecheck + 128 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
-
-## Deploy (free) on Vercel
-1. Push to GitHub, import the repo in Vercel (framework: Vite).
-2. Add env var `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`).
-3. Deploy. `api/*.js` become serverless functions; `api/_core` is shared code.
 
 ## Test cases for the demo
 | Case | Input | Expected |
@@ -93,13 +94,14 @@ CO₂ per passenger-km: car 171 g, auto 105, bike 85, bus 60, metro 14. All assu
 ## Project structure
 ```
 api/            advise.js, chat.js, health.js (Vercel functions)
-api/_core/      handlers, gemini client, prompts, cache, fallback
+api/_core/      handlers, gemini client, prompts, cache, http (rate limit), fallback
 src/lib/        geocode, airApi, aqiBands, impact, fallback, validate, storage, apiClient
 src/context/    AirwiseContext (global state)
 src/hooks/      usePlan (shared AI plan + swaps + exposure)
 src/components/ Layout (sidebar menu), Gates, AqiCard, ForecastChart, ProfileForm, RoutineList, HackCard, SwapCard, ExposureMeter, ChatBox, PromptPanel, ShareCard, ui
 src/pages/      Overview, Forecast, Routine, Indoor, Swaps, Exposure, Chat, Inspector, Profile
-design-system/  MASTER.md (UI UX Pro Max output + adaptations)
+design-system/  MASTER.md (design tokens)
+docs/media/     screenshots and demo GIF
 tests/          vitest unit tests
 server.js       local API server
 docs/CONTRACT.md module contract
