@@ -10,6 +10,44 @@ import { callGeminiJson, callGeminiText, modelName } from './gemini.js'
 import { getCache, setCache } from './cache.js'
 import { serverFallback } from './fallback.js'
 import { log } from './http.js'
+import { SWAP_IDS } from '../../src/lib/defaults.js'
+
+const isText = (/** @type {unknown} */ v) => typeof v === 'string' && v.trim().length > 0
+/** @param {unknown} v */
+const asArray = (v) => (Array.isArray(v) ? v : [])
+
+/**
+ * Repair the small slips a model makes before strict validation, so one stray value
+ * (risk "poor", effort "medium", an invented swap id, an extra item) doesn't throw away a good plan.
+ * Shape errors that can't be repaired (no summary, wrong types) still fail validation.
+ * @param {any} a
+ */
+export function normalizeAdvice(a) {
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return a
+  const effort = (/** @type {unknown} */ e) => {
+    const v = String(e ?? '').toLowerCase().trim()
+    return v.startsWith('low') ? 'low' : v.startsWith('high') ? 'high' : 'med'
+  }
+  const out = {
+    ...a,
+    // Overridden from the CPCB band after validation anyway; any value the model picks is placeholder.
+    risk_level: ['low', 'moderate', 'high', 'severe'].includes(a.risk_level) ? a.risk_level : 'moderate',
+    routine: asArray(a.routine).filter((r) => r && isText(r.time) && isText(r.activity) && isText(r.reason)).slice(0, 12),
+    indoor_hacks: asArray(a.indoor_hacks)
+      .filter((h) => h && isText(h.tip) && isText(h.why))
+      .map((h) => ({ ...h, effort: effort(h.effort) }))
+      .slice(0, 8),
+    swaps: asArray(a.swaps)
+      .filter((w) => w && SWAP_IDS.includes(w.id) && isText(w.from) && isText(w.to) && isText(w.impact_explained))
+      .slice(0, 6),
+  }
+  const t = a.translated
+  if (t && isText(t.summary)) {
+    out.translated = { summary: t.summary, topActions: asArray(t.topActions).filter(isText).slice(0, 3) }
+    if (out.translated.topActions.length === 0) delete out.translated
+  } else delete out.translated
+  return out
+}
 
 /** Temperatures: advice is structured and health-adjacent, so keep it low; chat a little warmer for natural wording. */
 const ADVICE_TEMPERATURE = 0.4
@@ -81,7 +119,7 @@ export async function handleAdvise(body) {
     } catch {
       throw new Error('GEMINI_BAD_JSON')
     }
-    const checked = validateAdvice(parsed)
+    const checked = validateAdvice(normalizeAdvice(parsed))
     if (!checked.ok) throw new Error('SCHEMA_FAIL: ' + checked.errors.slice(0, 3).join('; '))
     // Risk level comes from the CPCB band in code, never from the model, so the badge and the bands agree.
     const data = { ...checked.data, risk_level: aqiToRisk(input.aqiNow.aqi), swaps: groundSwaps(checked.data.swaps, input.computedImpacts) }

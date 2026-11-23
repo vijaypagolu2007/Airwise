@@ -5,6 +5,8 @@ It reads **live air quality** for your city, learns your **household and lifesty
 low-exposure, low-emission day — with the **impact of every choice in numbers**.
 
 
+**Live demo:** https://airwise-beta.vercel.app
+
 ## UI
 Dashboard with a side menu (drawer on mobile), one screen per section: Overview, Forecast, Daily routine, Indoor hacks, Swaps & impact, Exposure meter, Ask AirWise, AI inspector, Profile & city.
 Design system generated with [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (`design-system/MASTER.md`): Glassmorphism, sky + amber palette, Lora / Raleway, Phosphor icons, 4.5:1 contrast, visible focus, reduced-motion support.
@@ -28,13 +30,13 @@ Design system generated with [UI UX Pro Max](https://github.com/nextlevelbuilder
 - The server never trusts client numbers: it validates the profile, recomputes the AQI and every impact figure (`groundInput` in `api/_core/handlers.js`), fences all user text in the prompt and returns only coarse error codes.
 - `POST /api/advise` sends Gemini one structured prompt: live AQI + 24 h forecast + profile + **code-computed impact numbers**.
   Gemini returns strict JSON (`summary`, `risk_level`, `routine`, `indoor_hacks`, `swaps`) validated with **zod**.
-- `POST /api/chat` answers follow-up questions (temperature 0.9, uncached, so answers visibly change).
-- Hindi / Telugu: a second Gemini call translates the summary and top actions.
+- `POST /api/chat` answers follow-up questions (temperature 0.5, uncached, so answers change with the question).
+- Hindi / Telugu: the same Gemini call also returns a translated summary and top 3 actions (no second call).
 - **Numbers never come from the AI.** Exposure, CO₂ and ₹ figures are computed in `src/lib/impact.js`; Gemini only explains them.
 - **Never breaks:** no key, quota hit, timeout or invalid JSON → rule-based fallback (`src/lib/fallback.js`) in the same shape.
 
 ## Tech stack (all free)
-React 19 + Vite 7 + Tailwind 4 · Phosphor icons · Recharts · zod · Gemini 2.5 Flash (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs (no key) · Vercel functions · localStorage
+React 19 + Vite 7 + Tailwind 4 · Phosphor icons · Recharts · zod · Gemini 3.5 Flash-Lite with 3.1 Flash-Lite fallback (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs (no key) · Vercel functions · localStorage
 
 ## Architecture
 ```

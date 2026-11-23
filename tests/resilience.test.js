@@ -75,3 +75,40 @@ describe('vercel adapter', () => {
     expect(JSON.parse(res.out).error).toBe('INVALID_JSON')
   })
 })
+
+describe('normalizeAdvice: small model slips do not discard a good plan', async () => {
+  const { normalizeAdvice } = await import('../api/_core/handlers.js')
+  const { validateAdvice } = await import('../src/lib/validate.js')
+  const base = {
+    summary: 'Poor air today.',
+    risk_level: 'poor',
+    routine: [{ time: '15:00', activity: 'Walk', reason: 'PM2.5 lowest' }, { time: '', activity: 'x', reason: 'y' }],
+    indoor_hacks: [{ tip: 'Close windows', why: 'Keeps PM out', effort: 'Medium' }, { tip: 'Mop', why: 'Traps dust', effort: 'LOW effort' }],
+    swaps: [
+      { id: 'carToMetro', from: 'Car', to: 'Metro', impact_explained: 'Saves CO₂' },
+      { id: 'teleport', from: 'a', to: 'b', impact_explained: 'c' },
+    ],
+    translated: { summary: 'सारांश', topActions: ['a', 'b', 'c', 'd'] },
+  }
+
+  it('repairs risk, effort, invented swap ids, blank items and over-long lists', () => {
+    const n = normalizeAdvice(base)
+    expect(validateAdvice(n).ok).toBe(true)
+    expect(n.risk_level).toBe('moderate')
+    expect(n.indoor_hacks.map((h) => h.effort)).toEqual(['med', 'low'])
+    expect(n.swaps.map((s) => s.id)).toEqual(['carToMetro'])
+    expect(n.routine).toHaveLength(1)
+    expect(n.translated.topActions).toHaveLength(3)
+  })
+
+  it('drops an unusable translation instead of failing', () => {
+    expect(normalizeAdvice({ ...base, translated: { summary: '' } }).translated).toBeUndefined()
+    expect(normalizeAdvice({ ...base, translated: { summary: 'x', topActions: [] } }).translated).toBeUndefined()
+  })
+
+  it('still fails when the core shape is missing', () => {
+    expect(validateAdvice(normalizeAdvice({ risk_level: 'low' })).ok).toBe(false)
+    expect(normalizeAdvice(null)).toBe(null)
+    expect(normalizeAdvice([1])).toEqual([1])
+  })
+})

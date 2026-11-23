@@ -84,7 +84,6 @@ describe('Gemini path (mocked fetch)', () => {
   it.each([
     ['bad JSON', 'not json at all', 200, 'AI_OUTPUT_INVALID'],
     ['schema failure', JSON.stringify({ summary: 'x' }), 200, 'AI_OUTPUT_INVALID'],
-    ['unknown swap id', JSON.stringify(advice({ swaps: [{ id: 'teleport', from: 'a', to: 'b', impact_explained: 'c' }] })), 200, 'AI_OUTPUT_INVALID'],
     ['HTTP 429', '{}', 429, 'AI_BUSY'],
   ])('falls back to rule-based advice on %s', async (_name, text, status, error) => {
     mockGemini(text, status)

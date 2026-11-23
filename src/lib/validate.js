@@ -44,6 +44,7 @@ export const AdviceSchema = z.object({
   risk_level: z.enum(['low', 'moderate', 'high', 'severe']),
   routine: z
     .array(z.object({ time: z.string().min(1), activity: z.string().min(1), reason: z.string().min(1) }))
+    .min(1)
     .max(12),
   indoor_hacks: z
     .array(z.object({ tip: z.string().min(1), why: z.string().min(1), effort: z.enum(['low', 'med', 'high']) }))
