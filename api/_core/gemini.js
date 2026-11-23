@@ -49,7 +49,13 @@ async function callModel(model, prompt, generationConfig) {
   }
 
   const bodyText = await res.text()
-  if (!res.ok) throw new Error('GEMINI_HTTP_' + res.status)
+  if (!res.ok) {
+    // Google's error text (never the key) goes to the server log so 400s can be diagnosed in Vercel Logs.
+    let detail = ''
+    try { detail = String(JSON.parse(bodyText)?.error?.message || '').slice(0, 300) } catch { /* not JSON */ }
+    if (!process.env.AIRWISE_SILENT_LOGS) console.error(JSON.stringify({ scope: 'gemini', model, status: res.status, detail }))
+    throw new Error('GEMINI_HTTP_' + res.status)
+  }
   let body
   try {
     body = JSON.parse(bodyText)
@@ -72,7 +78,13 @@ async function callModel(model, prompt, generationConfig) {
 async function call(prompt, generationConfig) {
   try {
     return await callModel(modelName(), prompt, generationConfig)
-  } catch (e) {
+  } catch (e0) {
+    let e = e0
+    // A 503 is usually a brief overload: wait a moment and try the same model once more.
+    if (e instanceof Error && e.message === 'GEMINI_HTTP_503') {
+      await new Promise((r) => setTimeout(r, Number(process.env.GEMINI_RETRY_MS ?? 800)))
+      try { return await callModel(modelName(), prompt, generationConfig) } catch (e1) { e = e1 }
+    }
     const msg = e instanceof Error ? e.message : String(e)
     const fb = fallbackModelName()
     if (!RETRYABLE.test(msg) || !fb || fb === modelName()) throw e

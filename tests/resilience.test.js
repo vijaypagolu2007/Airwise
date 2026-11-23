@@ -12,17 +12,28 @@ const chatReq = () => ({
 const ok = (text) => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] }), { status: 200 })
 
 describe('model fallback', () => {
-  beforeEach(() => { process.env.GEMINI_API_KEY = 'k'; process.env.AIRWISE_SILENT_LOGS = '1' })
+  beforeEach(() => { process.env.GEMINI_API_KEY = 'k'; process.env.AIRWISE_SILENT_LOGS = '1'; process.env.GEMINI_RETRY_MS = '0' })
   afterEach(() => { vi.restoreAllMocks(); delete process.env.GEMINI_API_KEY; delete process.env.GEMINI_FALLBACK_MODEL })
 
-  it('retries once on the fallback model after a 503', async () => {
+  it('retries the same model once after a 503', async () => {
     const f = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(new Response('{}', { status: 503 }))
       .mockResolvedValueOnce(ok('Walk at 15:00.'))
     const r = await handleChat(chatReq())
     expect(r.body.source).toBe('gemini')
     expect(f).toHaveBeenCalledTimes(2)
-    expect(String(f.mock.calls[1][0])).toMatch(/gemini-3\.1-flash-lite/)
+    expect(String(f.mock.calls[1][0])).toMatch(/gemini-3\.5-flash-lite/)
+  })
+
+  it('switches to the fallback model when the 503 persists', async () => {
+    const f = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('{}', { status: 503 }))
+      .mockResolvedValueOnce(new Response('{}', { status: 503 }))
+      .mockResolvedValueOnce(ok('Walk at 15:00.'))
+    const r = await handleChat(chatReq())
+    expect(r.body.source).toBe('gemini')
+    expect(f).toHaveBeenCalledTimes(3)
+    expect(String(f.mock.calls[2][0])).toMatch(/gemini-3\.1-flash-lite/)
   })
 
   it('does not retry on a 400 (bad request is not transient)', async () => {
