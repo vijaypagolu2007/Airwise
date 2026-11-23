@@ -17,6 +17,7 @@ export default function ChatBox({ messages, onSend, sending }) {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, sending])
 
+  /** @param {string} [text] */
   function submit(text) {
     const t = String(text ?? q).trim()
     if (!t) return setError('Type a question first.')

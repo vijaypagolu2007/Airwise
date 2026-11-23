@@ -16,6 +16,7 @@ export default function CitySearch({ onLoaded, compact = false }) {
   const [error, setError] = useState(/** @type {string | null} */ (null))
   const [searching, setSearching] = useState(false)
 
+  /** @param {import('react').FormEvent<HTMLFormElement>} e */
   async function onSubmit(e) {
     e.preventDefault()
     setResults([])

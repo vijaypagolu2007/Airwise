@@ -25,4 +25,5 @@ describe('API handlers without a Gemini key', () => {
     expect(r.body.reply).toMatch(/AQI in Delhi is 347 \(Very Poor/)
   })
   it('health reports missing key', () => expect(handleHealth().body.geminiConfigured).toBe(false))
+  it('health reports whether the shared store is on, as a boolean only', () => expect(handleHealth().body.sharedStore).toBe(false))
 })

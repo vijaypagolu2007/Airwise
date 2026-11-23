@@ -23,6 +23,7 @@ function safeSet(key, value) {
   }
 }
 
+/** @returns {import('./types.js').Profile} */
 export function loadProfile() {
   const raw = safeGet(KEYS.profile)
   if (!raw) return structuredClone(DEFAULT_PROFILE)

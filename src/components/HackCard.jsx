@@ -1,7 +1,9 @@
 import { Lightbulb } from '@phosphor-icons/react'
 
+/** @type {Record<string, string>} */
 const EFFORT = { low: 'bg-emerald-100 text-emerald-800', med: 'bg-amber-100 text-amber-800', high: 'bg-red-100 text-red-800' }
 
+/** @param {{ hack: import('../lib/types.js').IndoorHack }} props */
 export default function HackCard({ hack }) {
   return (
     <div className="card h-full p-4">

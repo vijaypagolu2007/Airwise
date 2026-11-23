@@ -27,7 +27,7 @@ function summaryFor(name, aqi, pm25) {
 }
 
 /**
- * @param {{ location?: { name?: string }, aqiNow?: { aqi: number | null, pm25: number | null }, forecast24?: import('./types.js').HourEntry[], profile: any, computedImpacts?: { swaps?: import('./types.js').ComputedSwap[] } }} input
+ * @param {{ location?: { name?: string }, aqiNow?: { aqi: number | null, pm25: number | null }, forecast24?: import('./types.js').HourEntry[], profile: import('./types.js').Profile, computedImpacts?: { swaps?: import('./types.js').ComputedSwap[] } }} input
  */
 export function fallbackAdvice({ location, aqiNow, forecast24, profile, computedImpacts }) {
   const name = location?.name || 'your city'
@@ -92,8 +92,10 @@ export function fallbackAdvice({ location, aqiNow, forecast24, profile, computed
 
   routine.sort((a, b) => a.time.localeCompare(b.time))
 
+  /** @type {import('./types.js').IndoorHack[]} */
   const hacks = []
   const vulnerable = h.asthma || h.copd || h.heart || h.pregnant || (h.elderly || 0) > 0 || (h.kids || 0) > 0
+  /** @type {import('./types.js').IndoorHack} */
   const traffic = { tip: 'Close windows during traffic peaks 8–10 & 17–20', why: 'Rush-hour exhaust drifts indoors through open windows (infiltration).', effort: 'low' }
   if (vulnerable) hacks.push(traffic)
   if (!profile?.home?.purifier) hacks.push({ tip: 'Build a Corsi-Rosenthal box fan filter', why: 'Four MERV-13 filters taped to a box fan pull PM2.5 out of room air for under ₹2,000.', effort: 'med' })

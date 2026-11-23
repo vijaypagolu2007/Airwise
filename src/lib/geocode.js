@@ -32,7 +32,7 @@ export async function searchCity(query) {
   const results = json && Array.isArray(json.results) ? json.results : []
   if (results.length === 0) throw new Error('CITY_NOT_FOUND')
 
-  return results.map((/** @type {any} */ r) => ({
+  return results.map((/** @type {{ name: string, admin1?: string, country?: string, country_code?: string, latitude: number, longitude: number }} */ r) => ({
     name: r.name,
     admin1: r.admin1,
     country: r.country,

@@ -1,9 +1,11 @@
 // @ts-check
 // Browser → /api calls. Throws 'API_UNREACHABLE' when the server itself can't be reached.
 /**
+ * The server's response shape for each endpoint is declared by the typed wrappers below.
+ * @template T
  * @param {string} path
  * @param {unknown} body
- * @returns {Promise<any>}
+ * @returns {Promise<T>}
  */
 async function post(path, body) {
   let res
@@ -24,9 +26,9 @@ async function post(path, body) {
   return json
 }
 
-/** @param {unknown} body */
+/** @param {unknown} body @returns {Promise<import('./types.js').AdviseResponse>} */
 export const postAdvise = (body) => post('/api/advise', body)
-/** @param {unknown} body */
+/** @param {unknown} body @returns {Promise<import('./types.js').ChatResponse>} */
 export const postChat = (body) => post('/api/chat', body)
 
 /**

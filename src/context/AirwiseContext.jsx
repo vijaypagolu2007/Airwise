@@ -11,12 +11,18 @@ import {
 // the components that read that slice.
 /** @typedef {import('../lib/types.js').Place} Place */
 /** @typedef {Awaited<ReturnType<typeof fetchAirQuality>>} Air */
-/** @typedef {import('react').Dispatch<import('react').SetStateAction<any>>} Setter */
+/** @typedef {import('../lib/types.js').Profile} Profile */
+/** @typedef {import('../lib/types.js').PlanResult} PlanResult */
+/** @typedef {Partial<Profile> | ((prev: Profile) => Profile)} ProfileUpdate */
+/**
+ * @template T
+ * @typedef {import('react').Dispatch<import('react').SetStateAction<T>>} Setter
+ */
 /**
  * @typedef {{ place: Place | null, air: Air | null, airLoading: boolean, airError: string | null, city: string | null,
  *   setCityAndLoad: (name: string) => Promise<boolean>, loadPlace: (p: Place) => Promise<boolean>, retry: () => Promise<boolean> | null }} AirState
- * @typedef {{ profile: any, profileSaved: boolean, lang: string, updateProfile: (next: any) => void, resetProfile: () => void, setLang: (l: string) => void }} ProfileState
- * @typedef {{ advice: any, setAdvice: Setter, appliedIds: string[] | null, setAppliedIds: Setter }} PlanState
+ * @typedef {{ profile: Profile, profileSaved: boolean, lang: string, updateProfile: (next: ProfileUpdate) => void, resetProfile: () => void, setLang: (l: string) => void }} ProfileState
+ * @typedef {{ advice: PlanResult | null, setAdvice: Setter<PlanResult | null>, appliedIds: string[] | null, setAppliedIds: Setter<string[] | null> }} PlanState
  */
 
 const AirCtx = createContext(/** @type {AirState | null} */ (null))
@@ -113,7 +119,7 @@ function ProfileProvider({ children }) {
   const [profileSaved, setProfileSaved] = useState(() => hasSavedProfile())
   const [lang, setLangState] = useState(() => loadLang() || 'en')
 
-  const updateProfile = useCallback((/** @type {any} */ next) => {
+  const updateProfile = useCallback((/** @type {ProfileUpdate} */ next) => {
     setProfile((prev) => {
       const merged = typeof next === 'function' ? next(prev) : { ...prev, ...next }
       saveProfile(merged)
@@ -143,7 +149,7 @@ function ProfileProvider({ children }) {
 /** Last /api/advise result and which swaps the user has toggled on. */
 /** @param {{ children?: import('react').ReactNode }} props */
 function PlanProvider({ children }) {
-  const [advice, setAdvice] = useState(/** @type {any} */ (null)) // keyed by `key`
+  const [advice, setAdvice] = useState(/** @type {PlanResult | null} */ (null)) // keyed by `key`
   const [appliedIds, setAppliedIds] = useState(/** @type {string[] | null} */ (null)) // null = all applicable swaps applied
   const value = useMemo(() => ({ advice, setAdvice, appliedIds, setAppliedIds }), [advice, appliedIds])
   return <PlanCtx.Provider value={value}>{children}</PlanCtx.Provider>

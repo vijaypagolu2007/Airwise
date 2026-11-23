@@ -10,6 +10,7 @@ export default function Profile() {
   const { place, air } = useAir()
   const navigate = useNavigate()
 
+  /** @param {import('../lib/types.js').Profile} p */
   function save(p) {
     updateProfile({ ...p, city: place?.name || p.city })
     if (place && air) navigate('/overview')

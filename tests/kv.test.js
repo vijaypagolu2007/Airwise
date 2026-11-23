@@ -5,7 +5,7 @@ import { getCache, setCache, clearCache, cacheSize, CACHE_LIMITS } from '../api/
 
 const URL_ = 'https://kv.example.upstash.io'
 const on = () => { process.env.UPSTASH_REDIS_REST_URL = URL_ + '/'; process.env.UPSTASH_REDIS_REST_TOKEN = 't0k' }
-const off = () => { delete process.env.UPSTASH_REDIS_REST_URL; delete process.env.UPSTASH_REDIS_REST_TOKEN }
+const off = () => { for (const k of ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'KV_REST_API_URL', 'KV_REST_API_TOKEN']) delete process.env[k] }
 const reply = (body, ok = true) => vi.fn(async () => ({ ok, json: async () => body }))
 
 describe('kv (Upstash REST)', () => {
@@ -18,6 +18,16 @@ describe('kv (Upstash REST)', () => {
     expect(kvEnabled()).toBe(false)
     expect(await kvPipeline([['GET', 'x']])).toBeNull()
     expect(f).not.toHaveBeenCalled()
+  })
+
+  it('also accepts the Vercel Marketplace KV_REST_API_* names', async () => {
+    process.env.KV_REST_API_URL = URL_
+    process.env.KV_REST_API_TOKEN = 'mk'
+    const f = reply([{ result: 'PONG' }])
+    vi.stubGlobal('fetch', f)
+    expect(kvEnabled()).toBe(true)
+    expect(await kvPipeline([['PING']])).toEqual(['PONG'])
+    expect(f.mock.calls[0][1].headers.Authorization).toBe('Bearer mk')
   })
 
   it('sends one pipeline request with the bearer token', async () => {

@@ -4,7 +4,11 @@ import { useAir, errorMessage } from '../context/AirwiseContext.jsx'
 import { usePlan } from '../hooks/usePlan.js'
 import { Skeleton, ErrorBanner, EmptyState, InfoBanner, Spinner } from './ui.jsx'
 
+/** @typedef {ReturnType<typeof usePlan>} Plan */
+/** @typedef {Plan & { advice: import('../lib/types.js').PlanResult }} ReadyPlan */
+
 /** Renders children only once a city's air data is loaded. */
+/** @param {{ children?: import('react').ReactNode }} props */
 export function RequireAir({ children }) {
   const { air, airLoading, airError, retry } = useAir()
   if (airLoading && !air) return <div className="grid gap-4 md:grid-cols-2"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>
@@ -21,6 +25,7 @@ export function RequireAir({ children }) {
 }
 
 /** Renders children with the AI plan; shows loading + fallback banners. */
+/** @param {{ children: (plan: ReadyPlan) => import('react').ReactNode }} props */
 export function RequirePlan({ children }) {
   const plan = usePlan()
   if (plan.loading) {
@@ -36,7 +41,8 @@ export function RequirePlan({ children }) {
     <div className="space-y-4">
       {plan.offline && <InfoBanner>Offline fallback: the AirWise server couldn't be reached ({plan.offline}). Showing the rule-based plan.</InfoBanner>}
       {!plan.offline && a?.source === 'fallback' && <InfoBanner>Gemini was unavailable ({a.error}), so this uses AirWise's rule-based engine.</InfoBanner>}
-      {children(plan)}
+      {/* Not loading inside RequireAir means the advice for the current key has arrived. */}
+      {children(/** @type {ReadyPlan} */ (plan))}
     </div>
   )
 }

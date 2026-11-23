@@ -1,13 +1,19 @@
 import { MapPin } from '@phosphor-icons/react'
 import { bandForAqi } from '../lib/aqiBands.js'
 
+/** @typedef {import('../lib/types.js').Place} Place */
+/** @typedef {import('../lib/types.js').AqiNow} AqiNow */
+
+/** @type {['pm25' | 'pm10' | 'no2' | 'o3' | 'co' | 'so2', string, string][]} */
 const POLLUTANTS = [
   ['pm25', 'PM2.5', 'µg/m³'], ['pm10', 'PM10', 'µg/m³'], ['no2', 'NO₂', 'µg/m³'],
   ['o3', 'O₃', 'µg/m³'], ['co', 'CO', 'mg/m³'], ['so2', 'SO₂', 'µg/m³'],
 ]
 
+/** @param {{ place: Place, current: AqiNow }} props */
 export default function AqiCard({ place, current }) {
   const band = bandForAqi(current.aqi)
+  /** @param {string} k @param {number | null | undefined} v */
   const fmt = (k, v) => (v == null ? '–' : k === 'co' ? (v / 1000).toFixed(2) : v)
   return (
     <div className="card overflow-hidden">

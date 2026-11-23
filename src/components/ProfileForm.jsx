@@ -3,11 +3,20 @@ import { COMMUTE_MODES, FUELS } from '../lib/defaults.js'
 import { validateProfile } from '../lib/validate.js'
 import { UsersThree, Train, House, PersonSimpleWalk } from '@phosphor-icons/react'
 
+/** @typedef {import('../lib/types.js').Profile} Profile */
+/** @typedef {'household' | 'commute' | 'home' | 'outdoor'} Section */
+/**
+ * The form's working copy: number fields may hold the raw input string until submit.
+ * @typedef {{ [S in keyof Profile]: S extends Section ? { [K in keyof Profile[S]]: Profile[S][K] extends number ? number | string : Profile[S][K] } : Profile[S] }} ProfileDraft
+ */
+
+/** @type {Record<string, string>} */
 const ACRONYMS = { lpg: 'LPG', ac: 'AC', ev: 'EV', cng: 'CNG' }
+/** @param {string} s */
 const label = (s) => ACRONYMS[s] ?? s.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase())
 const fieldCls = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring'
 
-/** @param {{ id: string, text: string, value: any, onChange: (v: string) => void, error?: string, step?: number | string }} props */
+/** @param {{ id: string, text: string, value: number | string, onChange: (v: string) => void, error?: string, step?: number | string }} props */
 function Num({ id, text, value, onChange, error, step = 1 }) {
   return (
     <label htmlFor={id} className="block text-sm">
@@ -18,6 +27,7 @@ function Num({ id, text, value, onChange, error, step = 1 }) {
     </label>
   )
 }
+/** @param {{ id: string, text: string, checked: boolean, onChange: (v: boolean) => void }} props */
 function Check({ id, text, checked, onChange }) {
   return (
     <label htmlFor={id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm transition-colors hover:bg-sky-50">
@@ -26,6 +36,7 @@ function Check({ id, text, checked, onChange }) {
     </label>
   )
 }
+/** @param {{ id: string, text: string, value: string, onChange: (v: string) => void, disabled?: boolean }} props */
 function Time({ id, text, value, onChange, disabled }) {
   return (
     <label htmlFor={id} className="block text-sm">
@@ -35,6 +46,7 @@ function Time({ id, text, value, onChange, disabled }) {
     </label>
   )
 }
+/** @param {{ id: string, text: string, value: string, options: string[], onChange: (v: string) => void }} props */
 function Select({ id, text, value, options, onChange }) {
   return (
     <label htmlFor={id} className="block text-sm">
@@ -45,6 +57,7 @@ function Select({ id, text, value, options, onChange }) {
     </label>
   )
 }
+/** @param {{ title: string, icon?: import('@phosphor-icons/react').Icon, children?: import('react').ReactNode }} props */
 function Group({ title, icon: Icon, children }) {
   return (
     <fieldset className="rounded-xl border border-border bg-white/60 p-4">
@@ -55,14 +68,17 @@ function Group({ title, icon: Icon, children }) {
 }
 
 /** Numbers are edited as strings and converted on submit, so typing "-1" or "" is caught by validation. */
-/** @param {{ initial: any, onSave: (p: any) => void, submitText?: string }} props */
+/** @param {{ initial: Profile, onSave: (p: Profile) => void, submitText?: string }} props */
 export default function ProfileForm({ initial, onSave, submitText = 'Save profile' }) {
-  const [p, setP] = useState(() => structuredClone(initial))
+  const [p, setP] = useState(() => /** @type {ProfileDraft} */ (structuredClone(initial)))
   const [errors, setErrors] = useState(/** @type {Record<string, string>} */ ({}))
-  const set = (section, key) => (v) => setP((prev) => ({ ...prev, [section]: { ...prev[section], [key]: v } }))
+  /** @param {Section} section @param {string} key @returns {(v: string | boolean) => void} */
+  const set = (section, key) => (v) => setP((prev) => /** @type {ProfileDraft} */ ({ ...prev, [section]: { ...prev[section], [key]: v } }))
 
+  /** @param {import('react').FormEvent<HTMLFormElement>} e */
   function submit(e) {
     e.preventDefault()
+    /** @param {number | string | null} v */
     const toNum = (v) => (v === '' || v === null ? NaN : Number(v))
     const candidate = {
       ...p,
@@ -72,7 +88,7 @@ export default function ProfileForm({ initial, onSave, submitText = 'Save profil
     }
     /** @type {Record<string, string>} */
     const errs = {}
-    for (const k of ['adults', 'kids', 'elderly']) {
+    for (const k of /** @type {const} */ (['adults', 'kids', 'elderly'])) {
       const v = candidate.household[k]
       if (!Number.isInteger(v) || v < 0) errs[k] = 'Enter a whole number, 0 or more'
     }

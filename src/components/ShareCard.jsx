@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { bandForAqi } from '../lib/aqiBands.js'
 import { UsersFour, WhatsappLogo, Copy, Check } from '@phosphor-icons/react'
 
+/** @type {Record<string, { title: string, actions: string, share: string, copy: string, copied: string }>} */
 const T = {
   en: { title: "Today's air", actions: 'Top actions', share: 'Share on WhatsApp', copy: 'Copy', copied: 'Copied!' },
   hi: { title: 'आज की हवा', actions: 'मुख्य कदम', share: 'WhatsApp पर भेजें', copy: 'कॉपी करें', copied: 'कॉपी हो गया!' },
   te: { title: 'ఈరోజు గాలి', actions: 'ముఖ్య చర్యలు', share: 'WhatsAppలో పంపండి', copy: 'కాపీ', copied: 'కాపీ అయింది!' },
 }
 
+/** @param {{ city: string, aqi: number | null, actions: string[], lang?: string }} props */
 export default function ShareCard({ city, aqi, actions, lang = 'en' }) {
   const t = T[lang] || T.en
   const band = bandForAqi(aqi)

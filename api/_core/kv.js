@@ -5,8 +5,12 @@
 
 const TIMEOUT_MS = 1500
 
+// Upstash's own names, or the KV_REST_API_* names the Vercel Marketplace integration injects.
+const kvUrl = () => process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || ''
+const kvToken = () => process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || ''
+
 export function kvEnabled() {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  return Boolean(kvUrl() && kvToken())
 }
 
 /**
@@ -17,9 +21,9 @@ export function kvEnabled() {
 export async function kvPipeline(commands) {
   if (!kvEnabled()) return null
   try {
-    const res = await fetch(`${String(process.env.UPSTASH_REDIS_REST_URL).replace(/\/$/, '')}/pipeline`, {
+    const res = await fetch(`${kvUrl().replace(/\/$/, '')}/pipeline`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(commands),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })

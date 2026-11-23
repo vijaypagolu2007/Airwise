@@ -9,6 +9,7 @@ import { LANGUAGES } from '../lib/defaults.js'
 import { bandForAqi } from '../lib/aqiBands.js'
 import CitySearch from './CitySearch.jsx'
 
+/** @type {Record<string, string>} */
 const LANG_NAMES = { en: 'English', hi: 'हिन्दी', te: 'తెలుగు' }
 
 export const MENU = [
@@ -41,6 +42,7 @@ function Logo() {
   )
 }
 
+/** @param {{ onNavigate?: () => void }} props */
 function Menu({ onNavigate }) {
   return (
     <nav aria-label="Main" className="space-y-5">
@@ -98,6 +100,7 @@ function LangSelect() {
   )
 }
 
+/** @param {{ children?: import('react').ReactNode }} props */
 export default function Layout({ children }) {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
@@ -110,6 +113,7 @@ export default function Layout({ children }) {
   useEffect(() => {
     if (!open) return
     closeRef.current?.focus()
+    /** @param {KeyboardEvent} e */
     const onKey = (e) => {
       if (e.key === 'Escape') return setOpen(false)
       if (e.key !== 'Tab' || !drawerRef.current) return

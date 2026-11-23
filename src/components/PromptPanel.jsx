@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Robot, CaretDown, CaretUp } from '@phosphor-icons/react'
 
+/** @param {string | null} raw */
 function pretty(raw) {
   if (!raw) return '(no raw model response — rule-based fallback was used)'
   try {

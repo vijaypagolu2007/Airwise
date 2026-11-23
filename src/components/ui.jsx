@@ -2,6 +2,10 @@
 import { WarningCircle, Info, ArrowClockwise } from '@phosphor-icons/react'
 import { bandForAqi } from '../lib/aqiBands.js'
 
+/** @typedef {import('react').ReactNode} ReactNode */
+/** @typedef {import('@phosphor-icons/react').Icon} Icon */
+
+/** @param {{ label?: string }} props */
 export function Spinner({ label = 'Loading…' }) {
   return (
     <div className="flex items-center gap-3 text-muted-foreground" role="status" aria-live="polite">
@@ -11,6 +15,7 @@ export function Spinner({ label = 'Loading…' }) {
   )
 }
 
+/** @param {{ message: string, onRetry?: (() => unknown) | null }} props */
 export function ErrorBanner({ message, onRetry }) {
   return (
     <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
@@ -24,6 +29,7 @@ export function ErrorBanner({ message, onRetry }) {
   )
 }
 
+/** @param {{ children?: ReactNode, tone?: 'amber' | 'sky' }} props */
 export function InfoBanner({ children, tone = 'amber' }) {
   const tones = { amber: 'border-amber-200 bg-amber-50 text-amber-900', sky: 'border-sky-200 bg-sky-50 text-sky-900' }
   return (
@@ -34,7 +40,7 @@ export function InfoBanner({ children, tone = 'amber' }) {
   )
 }
 
-/** @param {{ title?: any, subtitle?: any, icon?: any, children?: any, right?: any, className?: string }} props */
+/** @param {{ title?: ReactNode, subtitle?: ReactNode, icon?: Icon, children?: ReactNode, right?: ReactNode, className?: string }} props */
 export function Panel({ title, subtitle, icon: Icon, children, right, className = '' }) {
   return (
     <section className={`card p-5 ${className}`}>
@@ -59,6 +65,7 @@ export function Panel({ title, subtitle, icon: Icon, children, right, className 
   )
 }
 
+/** @param {{ icon?: Icon, value: ReactNode, caption: ReactNode, tone?: 'sky' | 'green' | 'amber' | 'red' | 'slate', hint?: ReactNode }} props */
 export function StatCard({ icon: Icon, value, caption, tone = 'sky', hint }) {
   const tones = {
     sky: 'bg-sky-50 text-sky-800', green: 'bg-emerald-50 text-emerald-800',
@@ -76,6 +83,7 @@ export function StatCard({ icon: Icon, value, caption, tone = 'sky', hint }) {
   )
 }
 
+/** @param {{ label: string, value: string, tone?: 'sky' | 'green' | 'amber' }} props */
 export function MiniStat({ label, value, tone = 'sky' }) {
   const tones = { sky: 'bg-sky-50', green: 'bg-emerald-50', amber: 'bg-amber-50' }
   return (
@@ -98,10 +106,12 @@ export function RiskBadge({ aqi, risk }) {
   )
 }
 
+/** @param {{ className?: string }} props */
 export function Skeleton({ className = 'h-24' }) {
   return <div className={`animate-pulse rounded-2xl bg-sky-100/70 ${className}`} aria-hidden="true" />
 }
 
+/** @param {{ icon?: Icon, title: string, children?: ReactNode }} props */
 export function EmptyState({ icon: Icon, title, children }) {
   return (
     <div className="card grid place-items-center gap-3 p-10 text-center">

@@ -1,8 +1,10 @@
 import { formatNumber } from '../lib/impact.js'
 
+/** @param {{ summary: import('../lib/types.js').ExposureSummary }} props */
 export default function ExposureMeter({ summary }) {
   const { before, after, cutUg, cutPercent } = summary
   const max = Math.max(before.totalUg, 1)
+  /** @param {number} v @param {string} color */
   const bar = (v, color) => (
     <div className="h-6 w-full overflow-hidden rounded-full bg-slate-100">
       <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${Math.max(2, (v / max) * 100)}%` }} />

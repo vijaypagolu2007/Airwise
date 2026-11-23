@@ -1,3 +1,4 @@
+/** @param {{ items: import('../lib/types.js').RoutineItem[] }} props */
 export default function RoutineList({ items }) {
   return (
     <ol className="relative space-y-4 border-l-2 border-sky-100 pl-6">

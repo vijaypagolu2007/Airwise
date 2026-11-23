@@ -70,7 +70,7 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build:
 ```bash
-pnpm verify     # lint + typecheck + 162 tests with coverage + build
+pnpm verify     # lint + typecheck + 167 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 
@@ -81,7 +81,7 @@ pnpm e2e
 ```
 Screenshots and the demo GIF (needs ffmpeg on PATH): `pnpm capture`
 
-Optional shared rate limit and advice cache across serverless instances: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Without them, each instance keeps its own in-memory limiter and LRU cache.
+Optional shared rate limit and advice cache across serverless instances: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (or the `KV_REST_API_*` pair the Vercel Upstash integration adds); `/api/health` then reports `sharedStore: true`. Without them, each instance keeps its own in-memory limiter and LRU cache.
 
 ## Test cases for the demo
 | Case | Input | Expected |

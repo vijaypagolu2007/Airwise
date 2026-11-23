@@ -174,4 +174,10 @@ describe('cleanReply', () => {
     expect(long).toHaveLength(MAX_REPLY_CHARS)
     expect(long.endsWith('…')).toBe(true)
   })
+
+  it('keeps numeric inequalities that are not HTML tags', async () => {
+    const { cleanReply } = await import('../api/_core/handlers.js')
+    expect(cleanReply('Safe when PM2.5 < 15 and > 5.')).toBe('Safe when PM2.5 < 15 and > 5.')
+    expect(cleanReply('a <img src=x onerror=y> b </p>')).toBe('a  b')
+  })
 })

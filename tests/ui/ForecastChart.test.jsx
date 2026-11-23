@@ -38,6 +38,40 @@ describe('ForecastChart', () => {
     expect(screen.queryByText(/· AQI/)).toBeNull()
   })
 
+  it('reads layout once per pointer entry', () => {
+    render(<ForecastChart hourly={hourly} />)
+    const svg = screen.getByRole('img')
+    let reads = 0
+    svg.getBoundingClientRect = () => { reads++; return { left: 0, top: 0, width: 800, height: 320, right: 800, bottom: 320, x: 0, y: 0, toJSON() {} } }
+    fireEvent.pointerEnter(svg)
+    fireEvent.pointerMove(svg, { clientX: 100 })
+    fireEvent.pointerMove(svg, { clientX: 790 })
+    expect(reads).toBe(1)
+    expect(screen.getByText(/18:00 · PM2.5 66.4/)).toBeTruthy()
+  })
+
+  it('scrubs hours with the keyboard', () => {
+    render(<ForecastChart hourly={hourly} />)
+    const chart = screen.getByRole('group')
+    fireEvent.keyDown(chart, { key: 'ArrowRight' })
+    expect(screen.getByText(/15:00 · PM2.5 42 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'ArrowRight' })
+    expect(screen.getByText(/18:00 · PM2.5 66.4 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'Home' })
+    expect(screen.getByText(/07:00 · PM2.5 119.7 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'ArrowLeft' })
+    expect(screen.getByText(/07:00 · PM2.5 119.7 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'End' })
+    expect(screen.getByText(/18:00 · PM2.5 66.4 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'q' })
+    expect(screen.getByText(/18:00 · PM2.5 66.4 ·/)).toBeTruthy()
+    fireEvent.keyDown(chart, { key: 'Escape' })
+    expect(screen.queryByText(/· AQI/)).toBeNull()
+    fireEvent.keyDown(chart, { key: 'ArrowLeft' })
+    fireEvent.blur(chart)
+    expect(screen.queryByText(/· AQI/)).toBeNull()
+  })
+
   it('renders the table fallback with one row per hour', () => {
     render(<ForecastTable hourly={[...hourly, { time: '2026-11-23T19:00', pm25: null, aqi: null }]} />)
     expect(screen.getAllByRole('row')).toHaveLength(5)

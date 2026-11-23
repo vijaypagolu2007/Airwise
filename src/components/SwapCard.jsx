@@ -3,6 +3,10 @@ import { MiniStat } from './ui.jsx'
 import { ArrowRight, CheckCircle, PlusCircle } from '@phosphor-icons/react'
 
 /** `swap` = AI swap text { from, to, impact_explained }; `numbers` = matching computeAllSwaps entry. */
+/**
+ * @param {{ swap: { id?: string, from: string, to: string, impact_explained: string }, numbers: import('../lib/types.js').ComputedSwap | null,
+ *   applied: boolean, onToggle: (() => void) | null }} props
+ */
 export default function SwapCard({ swap, numbers, applied, onToggle }) {
   return (
     <div className={`card p-4 transition-colors ${applied ? '!border-emerald-400 !bg-emerald-50/50' : ''}`}>

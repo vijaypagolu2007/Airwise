@@ -50,7 +50,7 @@ export function exposureUg(conc, minutes, rateLpm, mult = 1) {
 }
 
 /** Weighted mean breathing rate of the household (litres/min). A pregnant member counts as an adult at 12.5. */
-/** @param {any} profile a Profile or just its household block */
+/** @param {(Partial<Profile['household']> & { household?: Partial<Profile['household']> }) | null | undefined} profile a Profile or just its household block */
 export function householdRate(profile) {
   const h = profile?.household || profile || {}
   const adults = Number(h.adults) || 0

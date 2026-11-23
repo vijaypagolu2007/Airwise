@@ -9,6 +9,7 @@ import { buildAdvisePrompt, buildChatPrompt } from './prompt.js'
 import { callGeminiJson, callGeminiText, modelName } from './gemini.js'
 import { getCache, setCache } from './cache.js'
 import { serverFallback } from './fallback.js'
+import { kvEnabled } from './kv.js'
 import { log } from './http.js'
 import { SWAP_IDS } from '../../src/lib/defaults.js'
 
@@ -152,7 +153,7 @@ export const MAX_REPLY_CHARS = 2000
  */
 export function cleanReply(text) {
   const out = String(text)
-    .replace(/<[^>]*>/g, '')
+    .replace(/<\/?[a-zA-Z][^>]*>/g, '') // tags only, so 'PM2.5 < 15 and > 5' survives
     // eslint-disable-next-line no-control-regex -- stripping control characters is the point
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/\n{3,}/g, '\n\n')
@@ -180,5 +181,5 @@ export async function handleChat(body) {
 }
 
 export function handleHealth() {
-  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, model: /^[a-z0-9.-]+$/i.test(modelName()) ? modelName() : 'INVALID_MODEL_NAME' } }
+  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, sharedStore: kvEnabled(), model: /^[a-z0-9.-]+$/i.test(modelName()) ? modelName() : 'INVALID_MODEL_NAME' } }
 }

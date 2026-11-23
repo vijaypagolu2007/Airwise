@@ -39,6 +39,7 @@ export function usePlan() {
   }, [key, payload, have, setAdvice, setAppliedIds])
 
   const current = have ? advice : null
+  /** @param {string} id */
   const toggle = (id) => setAppliedIds((prev) => {
     const base = prev ?? applicableIds
     return base.includes(id) ? base.filter((x) => x !== id) : [...base, id]
