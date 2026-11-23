@@ -1,16 +1,19 @@
 import { useId, useState } from 'react'
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { searchCity } from '../lib/geocode.js'
-import { useAirwise, errorMessage } from '../context/AirwiseContext.jsx'
+import { useAir, errorMessage } from '../context/AirwiseContext.jsx'
 
+/** @typedef {import('../lib/types.js').Place} Place */
+
+/** @param {{ onLoaded?: (p: Place) => void, compact?: boolean }} props */
 export default function CitySearch({ onLoaded, compact = false }) {
-  const { loadPlace, airLoading, airError, city } = useAirwise()
+  const { loadPlace, airLoading, airError, city } = useAir()
   const uid = useId()
   const inputId = `city-${uid}`
   const errorId = `city-error-${uid}`
   const [q, setQ] = useState(city || '')
-  const [results, setResults] = useState([])
-  const [error, setError] = useState(null)
+  const [results, setResults] = useState(/** @type {Place[]} */ ([]))
+  const [error, setError] = useState(/** @type {string | null} */ (null))
   const [searching, setSearching] = useState(false)
 
   async function onSubmit(e) {
@@ -26,12 +29,13 @@ export default function CitySearch({ onLoaded, compact = false }) {
       if (found.length === 1) await pick(found[0])
       else setResults(found)
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'GEOCODE_FAILED')
     } finally {
       setSearching(false)
     }
   }
 
+  /** @param {Place} p */
   async function pick(p) {
     setResults([])
     setQ(p.name)

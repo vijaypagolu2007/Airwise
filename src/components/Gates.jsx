@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { MapPinLine } from '@phosphor-icons/react'
-import { useAirwise, errorMessage } from '../context/AirwiseContext.jsx'
+import { useAir, errorMessage } from '../context/AirwiseContext.jsx'
 import { usePlan } from '../hooks/usePlan.js'
 import { Skeleton, ErrorBanner, EmptyState, InfoBanner, Spinner } from './ui.jsx'
 
 /** Renders children only once a city's air data is loaded. */
 export function RequireAir({ children }) {
-  const { air, airLoading, airError, retry } = useAirwise()
+  const { air, airLoading, airError, retry } = useAir()
   if (airLoading && !air) return <div className="grid gap-4 md:grid-cols-2"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>
   if (!air && airError) return <ErrorBanner message={errorMessage(airError)} onRetry={retry} />
   if (!air) {

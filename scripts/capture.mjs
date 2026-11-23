@@ -3,13 +3,13 @@ import { mkdirSync, statSync, rmSync, mkdtempSync, readdirSync, renameSync } fro
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 
-// Optional tool: Playwright is not a project dependency (keeps installs small).
-// One-time setup: pnpm add -D playwright && pnpm exec playwright install chromium   (ffmpeg on PATH for the GIF)
+// Optional tool (Playwright is a dev dependency; its browser is a separate one-time download).
+// One-time setup: pnpm exec playwright install chromium   (ffmpeg on PATH for the GIF)
 let chromium
 try {
   ;({ chromium } = await import('playwright'))
 } catch {
-  console.error('scripts/capture.mjs needs Playwright: pnpm add -D playwright && pnpm exec playwright install chromium')
+  console.error('scripts/capture.mjs needs Playwright: pnpm install && pnpm exec playwright install chromium')
   process.exit(1)
 }
 

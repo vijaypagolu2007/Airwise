@@ -6,7 +6,7 @@ import { axeViolations } from './setup.js'
 
 vi.mock('../../src/context/AirwiseContext.jsx', async (orig) => ({
   ...(await orig()),
-  useAirwise: () => ({ loadPlace, airLoading: false, airError: null, city: '' }),
+  useAir: () => ({ loadPlace, airLoading: false, airError: null, city: '' }),
 }))
 const loadPlace = vi.fn(async () => true)
 const searchCity = vi.fn(async () => { throw new Error('CITY_NOT_FOUND') })

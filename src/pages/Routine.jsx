@@ -2,10 +2,10 @@ import { Clock, ListChecks } from '@phosphor-icons/react'
 import RoutineList from '../components/RoutineList.jsx'
 import { Panel, RiskBadge } from '../components/ui.jsx'
 import { RequireAir, RequirePlan } from '../components/Gates.jsx'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useLoadedAir } from '../context/AirwiseContext.jsx'
 
 function Body() {
-  const { air, place } = useAirwise()
+  const { air, place } = useLoadedAir()
   return (
     <RequirePlan>
       {({ advice }) => {

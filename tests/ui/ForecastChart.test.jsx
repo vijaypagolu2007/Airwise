@@ -1,16 +1,8 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest'
-import { cloneElement } from 'react'
-import { render, screen } from '@testing-library/react'
-// jsdom has no layout, so give the chart a fixed size instead of measuring 0×0.
-vi.mock('recharts', async (orig) => ({
-  ...(await orig()),
-  ResponsiveContainer: ({ children }) => cloneElement(children, { width: 800, height: 320 }),
-}))
+import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import ForecastChart, { ForecastTable } from '../../src/components/ForecastChart.jsx'
-import './setup.js'
-
-globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} }
+import { axeViolations } from './setup.js'
 
 const hourly = [
   { time: '2026-11-23T07:00', pm25: 119.7, aqi: 299 },
@@ -19,11 +11,31 @@ const hourly = [
 ]
 
 describe('ForecastChart', () => {
-  it('describes the cleanest and worst hour for screen readers', () => {
-    render(<ForecastChart hourly={hourly} />)
+  it('describes the cleanest and worst hour for screen readers', async () => {
+    const { container } = render(<ForecastChart hourly={hourly} />)
     const label = screen.getByRole('img').getAttribute('aria-label')
     expect(label).toContain('Cleanest hour 15:00 at 42')
     expect(label).toContain('worst 07:00 at 119.7')
+    expect(screen.getByText('Cleanest')).toBeTruthy()
+    expect(screen.getByText('Worst')).toBeTruthy()
+    expect(await axeViolations(container)).toEqual([])
+  })
+
+  it('shows the hovered hour and clears it on leave', () => {
+    render(<ForecastChart hourly={hourly} />)
+    const svg = screen.getByRole('img')
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 800, height: 320, right: 800, bottom: 320, x: 0, y: 0, toJSON() {} })
+    fireEvent.pointerMove(svg, { clientX: 790 })
+    expect(screen.getByText(/2026-11-23 18:00 · PM2.5 66.4 · AQI 122/)).toBeTruthy()
+    fireEvent.pointerLeave(svg)
+    expect(screen.queryByText(/PM2.5 66.4 ·/)).toBeNull()
+  })
+
+  it('ignores pointer moves before layout', () => {
+    render(<ForecastChart hourly={hourly} />)
+    const svg = screen.getByRole('img')
+    fireEvent.pointerMove(svg, { clientX: 10 })
+    expect(screen.queryByText(/· AQI/)).toBeNull()
   })
 
   it('renders the table fallback with one row per hour', () => {

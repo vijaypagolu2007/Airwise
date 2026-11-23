@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { AirwiseProvider, useAirwise } from './context/AirwiseContext.jsx'
+import { AirwiseProvider, useAir, useProfile } from './context/AirwiseContext.jsx'
 import Layout from './components/Layout.jsx'
 import { ErrorBanner } from './components/ui.jsx'
 import { Spinner } from './components/ui.jsx'
@@ -17,7 +17,9 @@ const Inspector = lazy(() => import('./pages/Inspector.jsx'))
 const Profile = lazy(() => import('./pages/Profile.jsx'))
 
 class ErrorBoundary extends Component {
+  /** @type {{ error: Error | null }} */
   state = { error: null }
+  /** @param {Error} error */
   static getDerivedStateFromError(error) { return { error } }
   render() {
     if (this.state.error) {
@@ -28,7 +30,8 @@ class ErrorBoundary extends Component {
 }
 
 function Home() {
-  const { air, profileSaved } = useAirwise()
+  const { air } = useAir()
+  const { profileSaved } = useProfile()
   return <Navigate to={air && profileSaved ? '/overview' : '/profile'} replace />
 }
 

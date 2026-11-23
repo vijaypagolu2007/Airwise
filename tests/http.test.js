@@ -8,15 +8,15 @@ const req = (over = {}) => ({ method: 'POST', headers: { 'x-real-ip': '1.2.3.4' 
 describe('http helpers', () => {
   beforeEach(() => { resetRateLimits(); process.env.AIRWISE_SILENT_LOGS = '1' })
 
-  it('rate-limits per scope and IP within a window, then resets', () => {
+  it('rate-limits per scope and IP within a window, then resets', async () => {
     const t = 1_000_000
-    for (let i = 0; i < RATE_LIMITS.advise; i++) expect(checkRateLimit('advise', 'ip', t).ok).toBe(true)
-    const blocked = checkRateLimit('advise', 'ip', t + 1000)
+    for (let i = 0; i < RATE_LIMITS.advise; i++) expect((await checkRateLimit('advise', 'ip', t)).ok).toBe(true)
+    const blocked = await checkRateLimit('advise', 'ip', t + 1000)
     expect(blocked.ok).toBe(false)
     expect(blocked.retryAfterSec).toBe(59)
-    expect(checkRateLimit('advise', 'other-ip', t).ok).toBe(true)
-    expect(checkRateLimit('chat', 'ip', t).ok).toBe(true)
-    expect(checkRateLimit('advise', 'ip', t + 60_000).ok).toBe(true)
+    expect((await checkRateLimit('advise', 'other-ip', t)).ok).toBe(true)
+    expect((await checkRateLimit('chat', 'ip', t)).ok).toBe(true)
+    expect((await checkRateLimit('advise', 'ip', t + 60_000)).ok).toBe(true)
   })
 
   it('takes x-real-ip, else the right-most forwarded hop, else the socket', () => {
@@ -58,12 +58,15 @@ describe('origin check', () => {
   it('allows same host, no origin, localhost and ALLOWED_ORIGINS; blocks other sites', async () => {
     const { originAllowed } = await import('../api/_core/http.js')
     expect(originAllowed({})).toBe(true)
+    expect(originAllowed({ origin: 'https://airwise-beta.vercel.app', host: 'airwise-beta.vercel.app', 'sec-fetch-site': 'cross-site' })).toBe(false)
     expect(originAllowed({ origin: 'https://airwise-beta.vercel.app', host: 'airwise-beta.vercel.app' })).toBe(true)
     expect(originAllowed({ origin: 'http://localhost:5173', host: '127.0.0.1:8787' })).toBe(true)
     expect(originAllowed({ origin: 'https://evil.example', host: 'airwise-beta.vercel.app' })).toBe(false)
     const env = process.env.NODE_ENV
     process.env.NODE_ENV = 'production'
     expect(originAllowed({ origin: 'http://localhost:5173', host: 'airwise-beta.vercel.app' })).toBe(false)
+    expect(originAllowed({ host: 'airwise-beta.vercel.app' })).toBe(false) // scripts without Origin
+    expect(originAllowed({ origin: 'https://airwise-beta.vercel.app', host: 'airwise-beta.vercel.app' })).toBe(true)
     process.env.NODE_ENV = env
     expect(originAllowed({ origin: 'not a url', host: 'x' })).toBe(false)
     process.env.ALLOWED_ORIGINS = 'https://friend.example'

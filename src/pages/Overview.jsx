@@ -4,13 +4,14 @@ import AqiCard from '../components/AqiCard.jsx'
 import ShareCard from '../components/ShareCard.jsx'
 import { StatCard, RiskBadge, Skeleton } from '../components/ui.jsx'
 import { RequireAir } from '../components/Gates.jsx'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useLoadedAir, useProfile } from '../context/AirwiseContext.jsx'
 import { usePlan } from '../hooks/usePlan.js'
 import { bestHour, worstHour } from '../lib/airApi.js'
 import { formatNumber } from '../lib/impact.js'
 
 function Body() {
-  const { place, air, lang } = useAirwise()
+  const { place, air } = useLoadedAir()
+  const { lang } = useProfile()
   const plan = usePlan()
   const best = bestHour(air.hourly)
   const worst = worstHour(air.hourly)

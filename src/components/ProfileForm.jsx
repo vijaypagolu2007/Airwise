@@ -7,6 +7,7 @@ const ACRONYMS = { lpg: 'LPG', ac: 'AC', ev: 'EV', cng: 'CNG' }
 const label = (s) => ACRONYMS[s] ?? s.replaceAll('_', ' ').replace(/^\w/, (c) => c.toUpperCase())
 const fieldCls = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring'
 
+/** @param {{ id: string, text: string, value: any, onChange: (v: string) => void, error?: string, step?: number | string }} props */
 function Num({ id, text, value, onChange, error, step = 1 }) {
   return (
     <label htmlFor={id} className="block text-sm">
@@ -54,9 +55,10 @@ function Group({ title, icon: Icon, children }) {
 }
 
 /** Numbers are edited as strings and converted on submit, so typing "-1" or "" is caught by validation. */
+/** @param {{ initial: any, onSave: (p: any) => void, submitText?: string }} props */
 export default function ProfileForm({ initial, onSave, submitText = 'Save profile' }) {
   const [p, setP] = useState(() => structuredClone(initial))
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState(/** @type {Record<string, string>} */ ({}))
   const set = (section, key) => (v) => setP((prev) => ({ ...prev, [section]: { ...prev[section], [key]: v } }))
 
   function submit(e) {
@@ -68,6 +70,7 @@ export default function ProfileForm({ initial, onSave, submitText = 'Save profil
       commute: { ...p.commute, distanceKm: toNum(p.commute.distanceKm) },
       home: { ...p.home, plants: toNum(p.home.plants) },
     }
+    /** @type {Record<string, string>} */
     const errs = {}
     for (const k of ['adults', 'kids', 'elderly']) {
       const v = candidate.household[k]

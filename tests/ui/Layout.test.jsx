@@ -7,10 +7,11 @@ import './setup.js'
 
 vi.mock('../../src/context/AirwiseContext.jsx', async (orig) => ({
   ...(await orig()),
-  useAirwise: () => ({
-    place: { name: 'Delhi' }, air: { current: { aqi: 257 } }, lang: 'en', setLang: vi.fn(),
+  useAir: () => ({
+    place: { name: 'Delhi' }, air: { current: { aqi: 257 } },
     loadPlace: vi.fn(), airLoading: false, airError: null, city: 'Delhi',
   }),
+  useProfile: () => ({ lang: 'en', setLang: vi.fn() }),
 }))
 const { default: Layout } = await import('../../src/components/Layout.jsx')
 

@@ -34,6 +34,7 @@ export function InfoBanner({ children, tone = 'amber' }) {
   )
 }
 
+/** @param {{ title?: any, subtitle?: any, icon?: any, children?: any, right?: any, className?: string }} props */
 export function Panel({ title, subtitle, icon: Icon, children, right, className = '' }) {
   return (
     <section className={`card p-5 ${className}`}>
@@ -86,6 +87,7 @@ export function MiniStat({ label, value, tone = 'sky' }) {
 }
 
 /** Risk badge: text label + colour, never colour alone. */
+/** @param {{ aqi: number | null, risk?: string }} props */
 export function RiskBadge({ aqi, risk }) {
   const band = bandForAqi(aqi)
   return (

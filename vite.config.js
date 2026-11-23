@@ -1,6 +1,12 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { readFileSync } from 'node:fs'
+
+// `vite preview` serves the same security headers as production, so the E2E run catches CSP breakage.
+const vercelHeaders = Object.fromEntries(
+  JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8')).headers[0].headers.map((h) => [h.key, h.value]),
+)
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -13,13 +19,13 @@ export default defineConfig({
       },
     },
   },
+  preview: { port: 4173, headers: vercelHeaders },
   build: {
     rollupOptions: {
       output: {
         // Long-lived vendor chunks: React and the chart library change far less often than app code.
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          if (/recharts|d3-|victory-vendor/.test(id)) return 'charts'
           if (id.includes('@phosphor-icons')) return 'icons'
           if (/react-router|react-dom|scheduler|[\\/]react[\\/]/.test(id)) return 'react'
           return undefined
@@ -32,7 +38,7 @@ export default defineConfig({
     include: ['tests/**/*.test.{js,jsx}'],
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**', 'api/_core/**', 'src/components/ChatBox.jsx', 'src/components/ProfileForm.jsx', 'src/components/SwapCard.jsx', 'src/components/CitySearch.jsx', 'src/components/ForecastChart.jsx', 'src/components/Layout.jsx'],
+      include: ['src/lib/**', 'api/_core/**', 'src/components/ChatBox.jsx', 'src/components/ProfileForm.jsx', 'src/components/SwapCard.jsx', 'src/components/CitySearch.jsx', 'src/components/ForecastChart.jsx', 'src/components/Layout.jsx', 'src/context/AirwiseContext.jsx'],
       exclude: ['src/lib/types.js'],
       thresholds: { lines: 85, branches: 75, functions: 85 },
     },

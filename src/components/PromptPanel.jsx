@@ -10,6 +10,7 @@ function pretty(raw) {
   }
 }
 
+/** @param {{ prompt: string | null, raw: string | null, source: string, cached?: boolean, error?: string | null, defaultOpen?: boolean }} props */
 export default function PromptPanel({ prompt, raw, source, cached, error, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -26,11 +27,11 @@ export default function PromptPanel({ prompt, raw, source, cached, error, defaul
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div>
             <h4 className="mb-1 text-sm font-semibold text-sky-900">Prompt sent</h4>
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-3 text-xs text-slate-100">{prompt || '(none)'}</pre>
+            <pre tabIndex={0} aria-label="Prompt sent" className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-ring">{prompt || '(none)'}</pre>
           </div>
           <div>
             <h4 className="mb-1 text-sm font-semibold text-sky-900">Raw model response</h4>
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-3 text-xs text-emerald-200">{pretty(raw)}</pre>
+            <pre tabIndex={0} aria-label="Raw model response" className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-3 text-xs text-emerald-200 focus:outline-none focus:ring-2 focus:ring-ring">{pretty(raw)}</pre>
             {error && <p className="mt-2 text-xs text-amber-700">Fallback reason: {error}</p>}
           </div>
         </div>

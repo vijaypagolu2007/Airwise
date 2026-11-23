@@ -3,10 +3,11 @@ import { MapPin, UserCircleGear, ArrowCounterClockwise } from '@phosphor-icons/r
 import CitySearch from '../components/CitySearch.jsx'
 import ProfileForm from '../components/ProfileForm.jsx'
 import { Panel, InfoBanner } from '../components/ui.jsx'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useAir, useProfile } from '../context/AirwiseContext.jsx'
 
 export default function Profile() {
-  const { profile, profileSaved, updateProfile, resetProfile, place, air } = useAirwise()
+  const { profile, profileSaved, updateProfile, resetProfile } = useProfile()
+  const { place, air } = useAir()
   const navigate = useNavigate()
 
   function save(p) {

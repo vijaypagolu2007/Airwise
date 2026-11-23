@@ -6,10 +6,13 @@ const SAMPLES = [
   'Is my asthma medication plan affected today?',
 ]
 
+/**
+ * @param {{ messages: { role: string, content: string, source?: string, error?: string }[], onSend: (q: string) => void, sending: boolean }} props
+ */
 export default function ChatBox({ messages, onSend, sending }) {
   const [q, setQ] = useState('')
-  const [error, setError] = useState(null)
-  const endRef = useRef(null)
+  const [error, setError] = useState(/** @type {string | null} */ (null))
+  const endRef = useRef(/** @type {HTMLDivElement | null} */ (null))
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, sending])

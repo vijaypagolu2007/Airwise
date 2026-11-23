@@ -1,0 +1,9 @@
+{
+  "extends": "./jsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node", "react", "react-dom"],
+    "noImplicitAny": false
+  },
+  "include": ["src/**/*.js", "src/**/*.jsx", "api/**/*.js"]
+}

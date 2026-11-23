@@ -165,3 +165,13 @@ describe('server grounding', () => {
     expect(r.body.data.risk_level).toBe('severe')
   })
 })
+
+describe('cleanReply', () => {
+  it('strips markup and control characters, squeezes blank lines and caps length', async () => {
+    const { cleanReply, MAX_REPLY_CHARS } = await import('../api/_core/handlers.js')
+    expect(cleanReply('<b>Stay</b> in\u0007doors<script>x</script>\n\n\n\nOK ')).toBe('Stay indoorsx\n\nOK')
+    const long = cleanReply('a'.repeat(MAX_REPLY_CHARS + 50))
+    expect(long).toHaveLength(MAX_REPLY_CHARS)
+    expect(long.endsWith('…')).toBe(true)
+  })
+})

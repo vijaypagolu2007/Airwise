@@ -3,16 +3,18 @@ import ChatBox from '../components/ChatBox.jsx'
 import PromptPanel from '../components/PromptPanel.jsx'
 import { RiskBadge } from '../components/ui.jsx'
 import { RequireAir } from '../components/Gates.jsx'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useLoadedAir, useProfile } from '../context/AirwiseContext.jsx'
 import { postChat, buildContext } from '../lib/apiClient.js'
 import { aqiToRisk, bandForAqi } from '../lib/aqiBands.js'
 
 function Body() {
-  const { place, air, profile } = useAirwise()
-  const [messages, setMessages] = useState([])
+  const { place, air } = useLoadedAir()
+  const { profile } = useProfile()
+  const [messages, setMessages] = useState(/** @type {{ role: string, content: string, source?: string, error?: string }[]} */ ([]))
   const [sending, setSending] = useState(false)
-  const [last, setLast] = useState(null)
+  const [last, setLast] = useState(/** @type {{ source: string, prompt: string | null, reply?: string, error?: string } | null} */ (null))
 
+  /** @param {string} question */
   async function send(question) {
     const history = messages.slice(-12).map((m) => ({ role: m.role, content: m.content }))
     setMessages((m) => [...m, { role: 'user', content: question }])
@@ -21,7 +23,8 @@ function Body() {
       const r = await postChat({ ...buildContext(place, air, profile), question, history })
       setMessages((m) => [...m, { role: 'model', content: r.reply, source: r.source, error: r.error }])
       setLast(r)
-    } catch (e) {
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error('API_UNREACHABLE')
       const aqi = air.current.aqi
       const reply = `I couldn't reach the AirWise server. Rule-based answer: AQI in ${place.name} is ${aqi} (${bandForAqi(aqi).label}, ${aqiToRisk(aqi)} risk). For health symptoms please consult a doctor.`
       setMessages((m) => [...m, { role: 'model', content: reply, source: 'fallback', error: e.message }])

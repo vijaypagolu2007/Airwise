@@ -43,7 +43,7 @@ low-exposure, low-emission day — with the **impact of every choice in numbers*
 - **Never breaks:** a 503 is retried, then a fallback model is tried; if there's still no valid answer (no key, quota hit, timeout or invalid JSON), it falls back to the rule-based plan (`src/lib/fallback.js`) in the same shape. Small slips in the model's JSON are repaired before validation.
 
 ## Tech stack
-React 19 + Vite 7 + Tailwind 4 · Phosphor icons · Recharts · zod · Gemini 3.5 Flash-Lite with 3.1 Flash-Lite fallback (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs · Vercel functions · localStorage
+React 19 + Vite 7 + Tailwind 4 · Phosphor icons · hand-drawn SVG chart (no chart library) · zod · Gemini 3.5 Flash-Lite with 3.1 Flash-Lite fallback (Google AI Studio) · Open-Meteo Air Quality + Geocoding APIs · Vercel functions · localStorage
 
 ## Architecture
 ```
@@ -70,15 +70,18 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build:
 ```bash
-pnpm verify     # lint + typecheck + 140 tests with coverage + build
+pnpm verify     # lint + typecheck + 162 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 
-Screenshots and the demo GIF (optional; needs Playwright and ffmpeg):
+Real-browser E2E (production build with production security headers; checks the main flow, an error case, axe WCAG 2.1 AA including colour contrast on every screen, the mobile drawer and zero CSP violations):
 ```bash
-pnpm add -D playwright && pnpm exec playwright install chromium
-pnpm capture
+pnpm exec playwright install chromium   # once
+pnpm e2e
 ```
+Screenshots and the demo GIF (needs ffmpeg on PATH): `pnpm capture`
+
+Optional shared rate limit and advice cache across serverless instances: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Without them, each instance keeps its own in-memory limiter and LRU cache.
 
 ## Test cases for the demo
 | Case | Input | Expected |
@@ -100,15 +103,16 @@ CO₂ per passenger-km: car 171 g, auto 105, bike 85, bus 60, metro 14. All assu
 ## Project structure
 ```
 api/            advise.js, chat.js, health.js (Vercel functions)
-api/_core/      handlers, gemini client, prompts, cache, http (rate limit), fallback
+api/_core/      handlers, gemini client, prompts, cache (LRU), http (origin check, rate limit), kv (optional Upstash), fallback
 src/lib/        geocode, airApi, aqiBands, impact, fallback, validate, storage, apiClient
-src/context/    AirwiseContext (global state)
+src/context/    AirwiseContext (air, profile and plan providers)
 src/hooks/      usePlan (shared AI plan + swaps + exposure)
 src/components/ Layout (sidebar menu), Gates, AqiCard, ForecastChart, ProfileForm, RoutineList, HackCard, SwapCard, ExposureMeter, ChatBox, PromptPanel, ShareCard, ui
 src/pages/      Overview, Forecast, Routine, Indoor, Swaps, Exposure, Chat, Inspector, Profile
 design-system/  MASTER.md (design tokens)
 docs/media/     screenshots and demo GIF
-tests/          vitest unit tests
+tests/          vitest unit and component tests
+scripts/        e2e.mjs (Playwright + axe), capture.mjs (screenshots, GIF)
 server.js       local API server
 docs/CONTRACT.md module contract
 ```

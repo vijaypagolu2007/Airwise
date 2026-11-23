@@ -3,17 +3,17 @@ import { ChartLine, Table } from '@phosphor-icons/react'
 import ForecastChart, { ForecastTable } from '../components/ForecastChart.jsx'
 import { Panel, StatCard } from '../components/ui.jsx'
 import { RequireAir } from '../components/Gates.jsx'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useLoadedAir } from '../context/AirwiseContext.jsx'
 import { bestHour, worstHour } from '../lib/airApi.js'
 import { Sun, CloudWarning, ChartBar } from '@phosphor-icons/react'
 
 function Body() {
-  const { air } = useAirwise()
+  const { air } = useLoadedAir()
   const [view, setView] = useState('chart')
   const best = bestHour(air.hourly)
   const worst = worstHour(air.hourly)
   const day = air.hourly.slice(0, 24).filter((e) => typeof e.pm25 === 'number')
-  const avg = day.length ? Math.round(day.reduce((t, e) => t + e.pm25, 0) / day.length) : null
+  const avg = day.length ? Math.round(day.reduce((t, e) => t + (e.pm25 ?? 0), 0) / day.length) : null
   const tab = (id, Icon, text) => (
     <button onClick={() => setView(id)} aria-pressed={view === id} className={`btn px-3 py-1.5 text-sm ${view === id ? 'btn-primary' : 'btn-ghost'}`}>
       <Icon size={16} aria-hidden="true" />{text}

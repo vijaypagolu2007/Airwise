@@ -105,7 +105,7 @@ export async function handleAdvise(body) {
   const cacheKey = `${input.location.name}|${lang}|${Math.round(input.aqiNow.aqi / 10)}|${JSON.stringify(input.profile)}`
   const prompt = buildAdvisePrompt(input)
 
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) {
     log('advise', 'ok', { source: 'gemini', cached: true })
     return { status: 200, body: { ok: true, source: 'gemini', cached: true, ...cached } }
@@ -124,7 +124,7 @@ export async function handleAdvise(body) {
     // Risk level comes from the CPCB band in code, never from the model, so the badge and the bands agree.
     const data = { ...checked.data, risk_level: aqiToRisk(input.aqiNow.aqi), swaps: groundSwaps(checked.data.swaps, input.computedImpacts) }
     if (lang === 'en') delete data.translated
-    setCache(cacheKey, { data, prompt, raw })
+    await setCache(cacheKey, { data, prompt, raw })
     log('advise', 'ok', { source: 'gemini', cached: false })
     return { status: 200, body: { ok: true, source: 'gemini', cached: false, data, prompt, raw } }
   } catch (e) {
@@ -143,6 +143,23 @@ const BAND_ADVICE = {
   Severe: 'stay indoors as much as possible with filtered air and wear an N95 if you must go out',
 }
 
+export const MAX_REPLY_CHARS = 2000
+
+/**
+ * Chat replies render as plain text, but strip markup and control characters anyway and cap the length,
+ * so a prompt-injected reply can't smuggle HTML or a wall of text into the UI or the share card.
+ * @param {string} text
+ */
+export function cleanReply(text) {
+  const out = String(text)
+    .replace(/<[^>]*>/g, '')
+    // eslint-disable-next-line no-control-regex -- stripping control characters is the point
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+  return out.length > MAX_REPLY_CHARS ? `${out.slice(0, MAX_REPLY_CHARS - 1).trimEnd()}…` : out
+}
+
 /** @param {unknown} body */
 export async function handleChat(body) {
   const v = validateChatRequest(body)
@@ -152,7 +169,7 @@ export async function handleChat(body) {
   try {
     const { text } = await callGeminiText(prompt, CHAT_TEMPERATURE)
     log('chat', 'ok', { source: 'gemini' })
-    return { status: 200, body: { ok: true, source: 'gemini', reply: text, prompt } }
+    return { status: 200, body: { ok: true, source: 'gemini', reply: cleanReply(text), prompt } }
   } catch (e) {
     const aqi = Math.round(input.aqiNow.aqi)
     const band = bandForAqi(aqi).label

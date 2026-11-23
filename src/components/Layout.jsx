@@ -4,7 +4,7 @@ import {
   SquaresFour, ChartLineUp, Clock, House, Leaf, Heartbeat, ChatsCircle, Robot, UserCircleGear,
   List, X, Translate,
 } from '@phosphor-icons/react'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useAir, useProfile } from '../context/AirwiseContext.jsx'
 import { LANGUAGES } from '../lib/defaults.js'
 import { bandForAqi } from '../lib/aqiBands.js'
 import CitySearch from './CitySearch.jsx'
@@ -70,7 +70,7 @@ function Menu({ onNavigate }) {
 }
 
 function AirChip() {
-  const { place, air } = useAirwise()
+  const { place, air } = useAir()
   if (!place || !air) return null
   const band = bandForAqi(air.current.aqi)
   return (
@@ -86,7 +86,7 @@ function AirChip() {
 }
 
 function LangSelect() {
-  const { lang, setLang } = useAirwise()
+  const { lang, setLang } = useProfile()
   return (
     <label className="flex items-center gap-1.5 text-sm">
       <Translate size={18} className="text-muted-foreground" aria-hidden="true" />
@@ -102,9 +102,9 @@ export default function Layout({ children }) {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   const current = ALL.find((i) => pathname.startsWith(i.to))
-  const closeRef = useRef(null)
-  const drawerRef = useRef(null)
-  const menuButtonRef = useRef(null)
+  const closeRef = useRef(/** @type {HTMLButtonElement | null} */ (null))
+  const drawerRef = useRef(/** @type {HTMLDivElement | null} */ (null))
+  const menuButtonRef = useRef(/** @type {HTMLButtonElement | null} */ (null))
   useEffect(() => { document.getElementById('main')?.scrollTo(0, 0) }, [pathname])
   // Drawer: focus the close button on open, Escape closes, focus returns to the menu button.
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function Layout({ children }) {
       if (e.key === 'Escape') return setOpen(false)
       if (e.key !== 'Tab' || !drawerRef.current) return
       // Keep Tab / Shift+Tab inside the open drawer.
-      const items = [...drawerRef.current.querySelectorAll('a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])')]
+      const items = [...drawerRef.current.querySelectorAll(/** @type {'a'} */ ('a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])'))].map((el) => /** @type {HTMLElement} */ (el))
       if (!items.length) return
       const first = items[0]
       const last = items[items.length - 1]

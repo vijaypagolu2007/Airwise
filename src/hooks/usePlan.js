@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useAirwise } from '../context/AirwiseContext.jsx'
+import { useAir, useProfile, usePlanState } from '../context/AirwiseContext.jsx'
 import { computeAllSwaps, computeExposureSummary } from '../lib/impact.js'
 import { buildContext } from '../lib/apiClient.js'
 import { requestPlan } from '../lib/planRequest.js'
@@ -9,7 +9,9 @@ import { requestPlan } from '../lib/planRequest.js'
  * and the Gemini advice (fetched once per city/profile/lang, then reused across views).
  */
 export function usePlan() {
-  const { place, air, profile, lang, advice, setAdvice, appliedIds, setAppliedIds } = useAirwise()
+  const { place, air } = useAir()
+  const { profile, lang } = useProfile()
+  const { advice, setAdvice, appliedIds, setAppliedIds } = usePlanState()
 
   const ctx = useMemo(() => (place && air ? buildContext(place, air, profile) : null), [place, air, profile])
   const swaps = useMemo(() => (ctx ? computeAllSwaps(profile, ctx.forecast24) : []), [ctx, profile])
@@ -17,7 +19,7 @@ export function usePlan() {
   const applied = appliedIds ?? applicableIds
   const exposure = useMemo(() => (ctx ? computeExposureSummary(profile, ctx.forecast24, applied) : null), [ctx, profile, applied])
 
-  const key = ctx ? JSON.stringify([place.name, air.current.time, profile, lang]) : null
+  const key = ctx ? JSON.stringify([place?.name, air?.current.time, profile, lang]) : null
   const payload = useMemo(() => {
     if (!ctx) return null
     const fullExposure = computeExposureSummary(profile, ctx.forecast24, applicableIds)

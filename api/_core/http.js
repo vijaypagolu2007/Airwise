@@ -1,6 +1,7 @@
 // @ts-check
 // Transport helpers shared by the Vercel adapter (vercel.js) and the local server (../../server.js),
 // so body limits, rate limits and error shapes are identical in both.
+import { kvPipeline } from './kv.js'
 
 export const MAX_BODY_BYTES = 64 * 1024
 
@@ -13,24 +14,45 @@ const MAX_TRACKED = 5000
 const windows = new Map()
 
 /**
- * Fixed-window, per-instance limiter. Good enough for a free-tier demo (each serverless instance keeps its own
- * counters); swap for Upstash/Redis if the app ever needs a global limit.
+ * Fixed-window limiter, per instance.
  * @param {keyof typeof RATE_LIMITS} scope
  * @param {string} ip
- * @param {number} [now]
+ * @param {number} now
  * @returns {{ ok: true } | { ok: false, retryAfterSec: number }}
  */
-export function checkRateLimit(scope, ip, now = Date.now()) {
+function memoryLimit(scope, ip, now) {
   const key = `${scope}:${ip}`
   const w = windows.get(key)
   if (!w || now - w.start >= WINDOW_MS) {
-    if (windows.size >= MAX_TRACKED) windows.delete(/** @type {string} */ (windows.keys().next().value))
+    if (windows.size >= MAX_TRACKED) {
+      for (const [k, v] of windows) if (now - v.start >= WINDOW_MS) windows.delete(k)
+      if (windows.size >= MAX_TRACKED) windows.delete(/** @type {string} */ (windows.keys().next().value))
+    }
     windows.set(key, { start: now, count: 1 })
     return { ok: true }
   }
   if (w.count >= RATE_LIMITS[scope]) return { ok: false, retryAfterSec: Math.ceil((w.start + WINDOW_MS - now) / 1000) }
   w.count += 1
   return { ok: true }
+}
+
+/**
+ * Fixed-window limiter. Global across instances when Upstash is configured (kv.js); otherwise, or if the store
+ * fails, per instance.
+ * @param {keyof typeof RATE_LIMITS} scope
+ * @param {string} ip
+ * @param {number} [now]
+ * @returns {Promise<{ ok: true } | { ok: false, retryAfterSec: number }>}
+ */
+export async function checkRateLimit(scope, ip, now = Date.now()) {
+  const slot = Math.floor(now / WINDOW_MS)
+  const key = `rl:${scope}:${ip}:${slot}`
+  const shared = await kvPipeline([['INCR', key], ['PEXPIRE', key, WINDOW_MS]])
+  if (shared && typeof shared[0] === 'number') {
+    if (shared[0] <= RATE_LIMITS[scope]) return { ok: true }
+    return { ok: false, retryAfterSec: Math.max(1, Math.ceil(((slot + 1) * WINDOW_MS - now) / 1000)) }
+  }
+  return memoryLimit(scope, ip, now)
 }
 
 /** Test hook. */
@@ -50,23 +72,25 @@ export function clientIp(headers, socketAddress) {
 }
 
 /**
- * Browsers always send Origin on cross-site POSTs. Allow same-host requests, ALLOWED_ORIGINS (comma-separated),
- * and requests with no Origin (curl, server-to-server: still rate-limited). Blocks other sites from spending the quota
- * through a visitor's browser.
+ * Browsers send Origin on every POST, same-site included. Allow same-host requests and ALLOWED_ORIGINS
+ * (comma-separated); block other sites so they can't spend the Gemini quota through a visitor's browser.
+ * In production a POST with no Origin (curl, scripts) is refused too; locally it is allowed for testing.
  * @param {Record<string, string | string[] | undefined>} headers
  */
 export function originAllowed(headers) {
   const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
+  const prod = process.env.NODE_ENV === 'production'
   const origin = one(headers.origin).trim()
-  if (!origin) return true
+  if (!origin) return !prod
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
+  if (allowed.includes(origin)) return true
+  if (one(headers['sec-fetch-site']) === 'cross-site') return false
   let host, hostname
   try { ({ host, hostname } = new URL(origin)) } catch { return false }
   const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1'
-  if (isLoopback && process.env.NODE_ENV !== 'production') return true // local dev via the Vite proxy
+  if (isLoopback && !prod) return true // local dev via the Vite proxy
   const own = one(headers['x-forwarded-host']) || one(headers.host)
-  if (own && host === own.trim()) return true
-  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
-  return allowed.includes(origin)
+  return Boolean(own && host === own.trim())
 }
 
 /**
@@ -122,7 +146,7 @@ export async function runPost(req, scope, handler) {
     return { status: 403, body: { ok: false, error: 'FORBIDDEN_ORIGIN' } }
   }
   const ip = clientIp(req.headers, req.ip)
-  const rl = checkRateLimit(scope, ip)
+  const rl = await checkRateLimit(scope, ip)
   if (!rl.ok) {
     log(scope, 'rate_limited')
     return { status: 429, body: { ok: false, error: 'RATE_LIMITED', retryAfterSec: rl.retryAfterSec }, headers: { 'Retry-After': String(rl.retryAfterSec) } }
