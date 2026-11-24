@@ -26,4 +26,12 @@ describe('API handlers without a Gemini key', () => {
   })
   it('health reports missing key', () => expect(handleHealth().body.geminiConfigured).toBe(false))
   it('health reports whether the shared store is on, as a boolean only', () => expect(handleHealth().body.sharedStore).toBe(false))
+  it('health reports whether the bot check is on, as a boolean only', () => {
+    expect(handleHealth().body.botCheck).toBe(false)
+    process.env.TURNSTILE_SECRET_KEY = 'secret-value'
+    const body = handleHealth().body
+    delete process.env.TURNSTILE_SECRET_KEY
+    expect(body.botCheck).toBe(true)
+    expect(JSON.stringify(body)).not.toContain('secret-value')
+  })
 })

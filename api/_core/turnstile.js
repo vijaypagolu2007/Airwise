@@ -28,7 +28,7 @@ export async function verifyTurnstile(token, action, ip, fetchImpl = fetch) {
     const res = await fetchImpl(SITEVERIFY_URL, { method: 'POST', body: form, signal: AbortSignal.timeout(TIMEOUT_MS) })
     const out = /** @type {{ success?: boolean, action?: string, 'error-codes'?: string[] }} */ (await res.json())
     if (!out.success) return { ok: false, reason: (out['error-codes'] || ['rejected']).join(',') }
-    if (out.action && out.action !== action) return { ok: false, reason: 'action-mismatch' }
+    if (out.action !== action) return { ok: false, reason: 'action-mismatch' }
     return { ok: true }
   } catch {
     return { ok: false, reason: 'unreachable' }

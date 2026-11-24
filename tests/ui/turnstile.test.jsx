@@ -51,6 +51,20 @@ describe('Turnstile (browser)', () => {
     await expect(getTurnstileToken('chat')).rejects.toThrow('BOT_CHECK_FAILED')
   })
 
+  it('does not cache a broken load: the next call retries the script', async () => {
+    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', 'site')
+    let loads = 0
+    const orig = document.head.appendChild.bind(document.head)
+    vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
+      if (node instanceof HTMLScriptElement) { loads += 1; queueMicrotask(() => node.onload?.(new Event('load'))); return node }
+      return orig(node)
+    })
+    const { getTurnstileToken } = await fresh()
+    await expect(getTurnstileToken('chat')).rejects.toThrow('BOT_CHECK_FAILED')
+    await expect(getTurnstileToken('chat')).rejects.toThrow('BOT_CHECK_FAILED')
+    expect(loads).toBe(2)
+  })
+
   it('apiClient sends the token as x-turnstile-token', async () => {
     vi.stubEnv('VITE_TURNSTILE_SITE_KEY', 'site')
     fakeCloudflare((opts) => opts.callback('tok-2'))

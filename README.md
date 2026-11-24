@@ -8,6 +8,21 @@ low-exposure, low-emission day — with the **impact of every choice in numbers*
 
 ![AirWise demo](docs/media/demo.gif)
 
+## Problem statement
+
+> Create a GenAI-powered assistant that helps families and communities navigate severe winter smog and urban air pollution. It suggests low-emission daily routines, indoor air quality hacks, and sustainable alternatives tailored to their location and lifestyle, while clearly explaining the direct impact of their choices.
+
+| Requirement | How AirWise meets it |
+|---|---|
+| GenAI-powered assistant | Gemini writes the routine, indoor hacks, swap explanations and chat answers; the AI inspector shows the exact prompt and raw response |
+| Families and communities | Household profile (kids, elderly, asthma); WhatsApp community card; Hindi and Telugu |
+| Winter smog, urban pollution | Live CPCB AQI and 48-hour PM2.5 forecast from Open-Meteo |
+| Low-emission daily routines | Daily routine timed to the cleanest forecast hours |
+| Indoor air quality hacks | Indoor hacks ranked by the household's risk |
+| Sustainable alternatives | Swaps for commute, cooking fuel and more |
+| Tailored to location and lifestyle | City search plus profile; both are sent to Gemini as fenced, server-validated data |
+| Direct impact of choices | CO₂ saved, ₹ saved and PM2.5 dose cut per swap, computed deterministically in `src/lib/impact.js`; exposure meter shows before vs after |
+
 ## Screenshots
 
 | | |
@@ -70,7 +85,7 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build (the same checks run in GitHub Actions on every push):
 ```bash
-pnpm verify     # lint + typecheck + 180 tests with coverage + build
+pnpm verify     # lint + typecheck + 182 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 
@@ -83,7 +98,7 @@ Screenshots and the demo GIF (needs ffmpeg on PATH): `pnpm capture`
 
 Optional shared rate limit and advice cache across serverless instances: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (or the `KV_REST_API_*` pair the Vercel Upstash integration adds); `/api/health` then reports `sharedStore: true`. Without them, each instance keeps its own in-memory limiter and LRU cache.
 
-Optional bot check: set `TURNSTILE_SECRET_KEY` (server) and `VITE_TURNSTILE_SITE_KEY` (build time) from a Cloudflare Turnstile widget. Each `/api/advise` and `/api/chat` call then needs a fresh single-use token from an invisible widget, verified server-side with its action; scripts that forge the `Origin` header get `403 BOT_CHECK_FAILED`. Leave both unset to turn it off.
+Optional bot check: set `TURNSTILE_SECRET_KEY` (server) and `VITE_TURNSTILE_SITE_KEY` (build time) from a Cloudflare Turnstile widget. Each `/api/advise` and `/api/chat` call then needs a fresh single-use token from an invisible widget, verified server-side with its action; scripts that forge the `Origin` header get `403 BOT_CHECK_FAILED`, and `/api/health` reports `botCheck: true`. Leave both unset to turn it off.
 
 ## Test cases for the demo
 | Case | Input | Expected |

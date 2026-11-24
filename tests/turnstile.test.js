@@ -38,6 +38,7 @@ describe('Turnstile (server)', () => {
       .toEqual({ ok: false, reason: 'timeout-or-duplicate' })
     expect(await verifyTurnstile('t', 'chat', 'local', reply({ success: false }))).toEqual({ ok: false, reason: 'rejected' })
     expect(await verifyTurnstile('t', 'chat', 'local', reply({ success: true, action: 'advise' }))).toEqual({ ok: false, reason: 'action-mismatch' })
+    expect(await verifyTurnstile('t', 'chat', 'local', reply({ success: true }))).toEqual({ ok: false, reason: 'action-mismatch' })
     expect(await verifyTurnstile('t', 'chat', 'local', vi.fn(async () => { throw new Error('down') }))).toEqual({ ok: false, reason: 'unreachable' })
   })
 

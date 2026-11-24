@@ -26,7 +26,7 @@ function loadScript() {
       s.onload = () => {
         const api = /** @type {{ turnstile?: TurnstileApi }} */ (/** @type {unknown} */ (window)).turnstile
         if (api) resolve(api)
-        else reject(new Error('BOT_CHECK_FAILED'))
+        else { loading = null; reject(new Error('BOT_CHECK_FAILED')) }
       }
       s.onerror = () => { loading = null; reject(new Error('BOT_CHECK_FAILED')) }
       document.head.appendChild(s)

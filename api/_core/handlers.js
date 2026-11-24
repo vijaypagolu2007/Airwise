@@ -10,6 +10,7 @@ import { callGeminiJson, callGeminiText, modelName } from './gemini.js'
 import { getCache, setCache } from './cache.js'
 import { serverFallback } from './fallback.js'
 import { kvEnabled } from './kv.js'
+import { turnstileEnabled } from './turnstile.js'
 import { log } from './http.js'
 import { SWAP_IDS } from '../../src/lib/defaults.js'
 
@@ -181,5 +182,5 @@ export async function handleChat(body) {
 }
 
 export function handleHealth() {
-  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, sharedStore: kvEnabled(), model: /^[a-z0-9.-]+$/i.test(modelName()) ? modelName() : 'INVALID_MODEL_NAME' } }
+  return { status: 200, body: { ok: true, geminiConfigured: !!process.env.GEMINI_API_KEY, sharedStore: kvEnabled(), botCheck: turnstileEnabled(), model: /^[a-z0-9.-]+$/i.test(modelName()) ? modelName() : 'INVALID_MODEL_NAME' } }
 }
