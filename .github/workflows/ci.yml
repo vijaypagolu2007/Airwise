@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11   # match the major of your local `pnpm -v`
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint, typecheck, unit + component tests with coverage, build
+        run: pnpm verify
+      - name: Install Chromium for E2E
+        run: pnpm exec playwright install --with-deps chromium
+      - name: E2E (production build, production headers, axe WCAG 2.1 AA)
+        run: pnpm e2e

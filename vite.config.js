@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'node:fs'
+import { phosphorWeights } from './tools/phosphorWeights.js'
 
 // `vite preview` serves the same security headers as production, so the E2E run catches CSP breakage.
 const vercelHeaders = Object.fromEntries(
@@ -9,7 +10,7 @@ const vercelHeaders = Object.fromEntries(
 )
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [phosphorWeights(), react(), tailwindcss()],
   server: {
     port: 5173,
     proxy: {
@@ -23,7 +24,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Long-lived vendor chunks: React and the chart library change far less often than app code.
+        // Long-lived vendor chunks: React and the icon set change far less often than app code.
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
           if (id.includes('@phosphor-icons')) return 'icons'
@@ -38,7 +39,7 @@ export default defineConfig({
     include: ['tests/**/*.test.{js,jsx}'],
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**', 'api/_core/**', 'src/components/ChatBox.jsx', 'src/components/ProfileForm.jsx', 'src/components/SwapCard.jsx', 'src/components/CitySearch.jsx', 'src/components/ForecastChart.jsx', 'src/components/Layout.jsx', 'src/context/AirwiseContext.jsx'],
+      include: ['src/lib/**', 'api/_core/**', 'tools/**', 'src/components/ChatBox.jsx', 'src/components/ProfileForm.jsx', 'src/components/SwapCard.jsx', 'src/components/CitySearch.jsx', 'src/components/ForecastChart.jsx', 'src/components/Layout.jsx', 'src/context/AirwiseContext.jsx'],
       exclude: ['src/lib/types.js'],
       thresholds: { lines: 85, branches: 75, functions: 85 },
     },

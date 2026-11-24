@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { bestHour, worstHour } from '../lib/airApi.js'
 import { CHART, buildChart } from '../lib/chartGeometry.js'
 
@@ -21,6 +21,17 @@ export default function ForecastChart({ hourly }) {
   const [hover, setHover] = useState(-1)
   // Read layout once per pointer entry, not on every move.
   const box = useRef(/** @type {DOMRect | null} */ (null))
+
+  // A resize or scroll while hovering moves the chart, so drop the cached box and re-read on the next move.
+  useEffect(() => {
+    const reset = () => { box.current = null }
+    window.addEventListener('resize', reset)
+    window.addEventListener('scroll', reset, true)
+    return () => {
+      window.removeEventListener('resize', reset)
+      window.removeEventListener('scroll', reset, true)
+    }
+  }, [])
 
   /** @param {import('react').PointerEvent<SVGSVGElement>} e */
   const onEnter = (e) => {

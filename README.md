@@ -68,9 +68,9 @@ Two terminals:
 pnpm run api    # API on http://127.0.0.1:8787
 pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
-Tests and build:
+Tests and build (the same checks run in GitHub Actions on every push):
 ```bash
-pnpm verify     # lint + typecheck + 167 tests with coverage + build
+pnpm verify     # lint + typecheck + 171 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 
@@ -112,6 +112,8 @@ src/pages/      Overview, Forecast, Routine, Indoor, Swaps, Exposure, Chat, Insp
 design-system/  MASTER.md (design tokens)
 docs/media/     screenshots and demo GIF
 tests/          vitest unit and component tests
+tools/          phosphorWeights.js (Vite plugin: ships only the 4 icon weights the UI renders)
+.github/        CI: verify + E2E on every push
 scripts/        e2e.mjs (Playwright + axe), capture.mjs (screenshots, GIF)
 server.js       local API server
 docs/CONTRACT.md module contract

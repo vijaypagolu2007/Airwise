@@ -16,6 +16,7 @@
     "maxNodeModuleJsDepth": 0
   },
   "include": [
+    "tools/**/*.js",
     "src/lib/**/*.js",
     "api/**/*.js"
   ]

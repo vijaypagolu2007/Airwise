@@ -50,6 +50,27 @@ describe('ForecastChart', () => {
     expect(screen.getByText(/18:00 · PM2.5 66.4/)).toBeTruthy()
   })
 
+  it('re-reads layout after a resize or scroll', () => {
+    const { unmount } = render(<ForecastChart hourly={hourly} />)
+    const svg = screen.getByRole('img')
+    let reads = 0
+    let width = 800
+    svg.getBoundingClientRect = () => { reads++; return { left: 0, top: 0, width, height: 320, right: width, bottom: 320, x: 0, y: 0, toJSON() {} } }
+    fireEvent.pointerEnter(svg)
+    fireEvent.pointerMove(svg, { clientX: 790 })
+    expect(reads).toBe(1)
+    width = 400
+    fireEvent(window, new Event('resize'))
+    fireEvent.pointerMove(svg, { clientX: 10 })
+    expect(reads).toBe(2)
+    expect(screen.getByText(/07:00 · PM2.5 119.7/)).toBeTruthy()
+    fireEvent.scroll(window)
+    fireEvent.pointerMove(svg, { clientX: 395 })
+    expect(reads).toBe(3)
+    expect(screen.getByText(/18:00 · PM2.5 66.4/)).toBeTruthy()
+    unmount()
+  })
+
   it('scrubs hours with the keyboard', () => {
     render(<ForecastChart hourly={hourly} />)
     const chart = screen.getByRole('group')
