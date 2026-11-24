@@ -26,7 +26,8 @@ function Body() {
     } catch (err) {
       const e = err instanceof Error ? err : new Error('API_UNREACHABLE')
       const aqi = air.current.aqi
-      const reply = `I couldn't reach the AirWise server. Rule-based answer: AQI in ${place.name} is ${aqi} (${bandForAqi(aqi).label}, ${aqiToRisk(aqi)} risk). For health symptoms please consult a doctor.`
+      const why = e.message === 'BOT_CHECK_FAILED' ? "I couldn't confirm this request came from a person." : "I couldn't reach the AirWise server."
+      const reply = `${why} Rule-based answer: AQI in ${place.name} is ${aqi} (${bandForAqi(aqi).label}, ${aqiToRisk(aqi)} risk). For health symptoms please consult a doctor.`
       setMessages((m) => [...m, { role: 'model', content: reply, source: 'fallback', error: e.message }])
       setLast({ source: 'fallback', prompt: null, error: e.message })
     } finally {

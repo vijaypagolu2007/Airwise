@@ -70,7 +70,7 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build (the same checks run in GitHub Actions on every push):
 ```bash
-pnpm verify     # lint + typecheck + 171 tests with coverage + build
+pnpm verify     # lint + typecheck + 180 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 
@@ -82,6 +82,8 @@ pnpm e2e
 Screenshots and the demo GIF (needs ffmpeg on PATH): `pnpm capture`
 
 Optional shared rate limit and advice cache across serverless instances: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (or the `KV_REST_API_*` pair the Vercel Upstash integration adds); `/api/health` then reports `sharedStore: true`. Without them, each instance keeps its own in-memory limiter and LRU cache.
+
+Optional bot check: set `TURNSTILE_SECRET_KEY` (server) and `VITE_TURNSTILE_SITE_KEY` (build time) from a Cloudflare Turnstile widget. Each `/api/advise` and `/api/chat` call then needs a fresh single-use token from an invisible widget, verified server-side with its action; scripts that forge the `Origin` header get `403 BOT_CHECK_FAILED`. Leave both unset to turn it off.
 
 ## Test cases for the demo
 | Case | Input | Expected |
@@ -103,7 +105,7 @@ CO₂ per passenger-km: car 171 g, auto 105, bike 85, bus 60, metro 14. All assu
 ## Project structure
 ```
 api/            advise.js, chat.js, health.js (Vercel functions)
-api/_core/      handlers, gemini client, prompts, cache (LRU), http (origin check, rate limit), kv (optional Upstash), fallback
+api/_core/      handlers, gemini client, prompts, cache (LRU), http (origin check, rate limit), turnstile (optional bot check), kv (optional Upstash), fallback
 src/lib/        geocode, airApi, aqiBands, impact, fallback, validate, storage, apiClient
 src/context/    AirwiseContext (air, profile and plan providers)
 src/hooks/      usePlan (shared AI plan + swaps + exposure)

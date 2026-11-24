@@ -2,6 +2,7 @@
 // Transport helpers shared by the Vercel adapter (vercel.js) and the local server (../../server.js),
 // so body limits, rate limits and error shapes are identical in both.
 import { kvPipeline } from './kv.js'
+import { verifyTurnstile } from './turnstile.js'
 
 export const MAX_BODY_BYTES = 64 * 1024
 
@@ -150,6 +151,13 @@ export async function runPost(req, scope, handler) {
   if (!rl.ok) {
     log(scope, 'rate_limited')
     return { status: 429, body: { ok: false, error: 'RATE_LIMITED', retryAfterSec: rl.retryAfterSec }, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+  }
+  // After the rate limit, so a flood never reaches Cloudflare; before the body, so bots cost us nothing more.
+  const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
+  const bot = await verifyTurnstile(one(req.headers['x-turnstile-token']), scope, ip)
+  if (!bot.ok) {
+    log(scope, 'bot_check_failed', { reason: bot.reason })
+    return { status: 403, body: { ok: false, error: 'BOT_CHECK_FAILED' } }
   }
   let body = req.body
   if (body && typeof body === 'object' && Symbol.asyncIterator in body) {

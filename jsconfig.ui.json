@@ -2,7 +2,7 @@
   "extends": "./jsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["node", "react", "react-dom"],
+    "types": ["node", "react", "react-dom", "vite/client"],
     "noImplicitAny": true
   },
   "include": ["src/**/*.js", "src/**/*.jsx", "api/**/*.js"]

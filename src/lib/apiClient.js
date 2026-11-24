@@ -1,16 +1,22 @@
 // @ts-check
 // Browser → /api calls. Throws 'API_UNREACHABLE' when the server itself can't be reached.
+import { getTurnstileToken } from './turnstile.js'
+
 /**
  * The server's response shape for each endpoint is declared by the typed wrappers below.
  * @template T
- * @param {string} path
+ * @param {'advise' | 'chat'} action
  * @param {unknown} body
  * @returns {Promise<T>}
  */
-async function post(path, body) {
+async function post(action, body) {
+  /** @type {Record<string, string>} */
+  const headers = { 'Content-Type': 'application/json' }
+  const token = await getTurnstileToken(action)
+  if (token) headers['x-turnstile-token'] = token
   let res
   try {
-    res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    res = await fetch(`/api/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
   } catch {
     throw new Error('API_UNREACHABLE')
   }
@@ -27,9 +33,9 @@ async function post(path, body) {
 }
 
 /** @param {unknown} body @returns {Promise<import('./types.js').AdviseResponse>} */
-export const postAdvise = (body) => post('/api/advise', body)
+export const postAdvise = (body) => post('advise', body)
 /** @param {unknown} body @returns {Promise<import('./types.js').ChatResponse>} */
-export const postChat = (body) => post('/api/chat', body)
+export const postChat = (body) => post('chat', body)
 
 /**
  * Shared grounded context sent to both endpoints.
