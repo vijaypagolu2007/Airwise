@@ -25,11 +25,11 @@ export default function ForecastChart({ hourly }) {
   // A resize or scroll while hovering moves the chart, so drop the cached box and re-read on the next move.
   useEffect(() => {
     const reset = () => { box.current = null }
-    window.addEventListener('resize', reset)
-    window.addEventListener('scroll', reset, true)
+    window.addEventListener('resize', reset, { passive: true })
+    window.addEventListener('scroll', reset, { capture: true, passive: true })
     return () => {
       window.removeEventListener('resize', reset)
-      window.removeEventListener('scroll', reset, true)
+      window.removeEventListener('scroll', reset, { capture: true })
     }
   }, [])
 

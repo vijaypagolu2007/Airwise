@@ -1,7 +1,9 @@
 // @ts-check
 // Phosphor ships six weights of every icon. AirWise only renders four, so the build drops the
-// other two ("light", "thin") from each icon's path map. On the icons AirWise uses, this
-// cuts the icons chunk from about 110 kB to 75 kB (25 to 15 kB gzip) with no change to how any icon looks.
+// other two ("light", "thin") from each icon's path map. On the icons AirWise uses, this cuts the
+// icons chunk from about 110 kB to 75 kB (25 to 15 kB gzip) with no change to how any icon looks.
+// @phosphor-icons/react is pinned to an exact version in package.json because this reads its built
+// defs files; tests/icons.test.js re-checks every imported icon after any upgrade.
 
 /** Weights the UI may render. tests/icons.test.js fails if source code asks for any other. */
 export const KEEP_WEIGHTS = /** @type {const} */ (['regular', 'bold', 'fill', 'duotone'])
