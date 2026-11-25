@@ -40,10 +40,10 @@ export const ADVICE_SCHEMA_TEXT = `{
 /** @param {string} language */
 const TRANSLATED_SCHEMA_TEXT = (language) => `Also add "translated": { "summary": "the summary in simple, natural ${language}", "topActions": ["the 3 most important routine items in ${language}, keeping HH:MM times and numbers"] }.`
 
-/** @param {any} input validated, server-grounded advise request */
+/** @param {{ lang?: string } & Record<string, unknown>} input validated, server-grounded advise request */
 export function buildAdvisePrompt(input) {
   /** @type {string | undefined} */
-  const language = /** @type {Record<string, string>} */ ({ hi: 'Hindi', te: 'Telugu' })[input.lang]
+  const language = /** @type {Record<string, string>} */ ({ hi: 'Hindi', te: 'Telugu' })[input.lang ?? 'en']
   const langNote = language ? `\nWrite every other value in English. ${TRANSLATED_SCHEMA_TEXT(language)}` : ''
   return `${SYSTEM_PROMPT}
 
@@ -60,10 +60,13 @@ ${JSON.stringify(cleanDeep(input))}
 Return ONLY the JSON object, no markdown.${langNote}`
 }
 
-/** @param {any} input validated, server-grounded chat request */
+/**
+ * @param {{ question: string, history?: { role: string, content: string }[], location: unknown, aqiNow: unknown,
+ *   forecast24: unknown, profile: unknown, computedImpacts?: { swaps?: unknown } }} input validated, server-grounded chat request
+ */
 export function buildChatPrompt(input) {
   const history = (input.history || [])
-    .map((/** @type {{ role: string, content: string }} */ m) => `${m.role === 'user' ? 'User' : 'AirWise'}: ${clean(m.content)}`)
+    .map((m) => `${m.role === 'user' ? 'User' : 'AirWise'}: ${clean(m.content)}`)
     .join('\n')
   return `${SYSTEM_PROMPT}
 

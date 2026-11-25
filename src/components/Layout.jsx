@@ -32,6 +32,8 @@ export const MENU = [
   ] },
 ]
 const ALL = MENU.flatMap((g) => g.items)
+/** Everything Tab can land on inside the open drawer. */
+const FOCUSABLE = 'a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])'
 
 function Logo() {
   return (
@@ -118,7 +120,7 @@ export default function Layout({ children }) {
       if (e.key === 'Escape') return setOpen(false)
       if (e.key !== 'Tab' || !drawerRef.current) return
       // Keep Tab / Shift+Tab inside the open drawer.
-      const items = [...drawerRef.current.querySelectorAll(/** @type {'a'} */ ('a[href], button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])'))].map((el) => /** @type {HTMLElement} */ (el))
+      const items = [.../** @type {NodeListOf<HTMLElement>} */ (drawerRef.current.querySelectorAll(FOCUSABLE))]
       if (!items.length) return
       const first = items[0]
       const last = items[items.length - 1]

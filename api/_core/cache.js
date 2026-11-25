@@ -4,10 +4,12 @@ import { kvPipeline } from './kv.js'
 
 const TTL_MS = 60 * 60 * 1000
 const MAX_ENTRIES = 500
-/** @type {Map<string, { at: number, value: any }>} */
+/** A cached advise result: the validated plan with the prompt and raw reply that produced it. */
+/** @typedef {Record<string, unknown>} CachedAdvice */
+/** @type {Map<string, { at: number, value: CachedAdvice }>} */
 const store = new Map()
 
-/** @param {string} key @param {number} now */
+/** @param {string} key @param {number} now @returns {CachedAdvice | undefined} */
 function memGet(key, now) {
   const hit = store.get(key)
   if (!hit) return undefined
@@ -21,7 +23,7 @@ function memGet(key, now) {
   return hit.value
 }
 
-/** @param {string} key @param {any} value @param {number} now */
+/** @param {string} key @param {CachedAdvice} value @param {number} now */
 function memSet(key, value, now) {
   store.delete(key)
   if (store.size >= MAX_ENTRIES) {
@@ -31,16 +33,19 @@ function memSet(key, value, now) {
   store.set(key, { at: now, value })
 }
 
-/** @param {string} key @param {number} [now] */
+/** @param {string} key @param {number} [now] @returns {Promise<CachedAdvice | undefined>} */
 export async function getCache(key, now = Date.now()) {
   const shared = await kvPipeline([['GET', `advice:${key}`]])
   if (shared && typeof shared[0] === 'string') {
-    try { return JSON.parse(shared[0]) } catch { /* corrupt entry: fall through */ }
+    try {
+      const parsed = JSON.parse(shared[0])
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed
+    } catch { /* corrupt entry: fall through */ }
   }
   return memGet(key, now)
 }
 
-/** @param {string} key @param {any} value @param {number} [now] */
+/** @param {string} key @param {CachedAdvice} value @param {number} [now] */
 export async function setCache(key, value, now = Date.now()) {
   memSet(key, value, now)
   await kvPipeline([['SET', `advice:${key}`, JSON.stringify(value), 'PX', TTL_MS]])

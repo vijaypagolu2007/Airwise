@@ -9,7 +9,7 @@ export default function Indoor() {
           <>
             <p className="text-muted-foreground">Ranked for your household, most important first.</p>
             <div className="grid gap-4 md:grid-cols-2">
-              {advice.data.indoor_hacks.map((h, i) => <HackCard key={i} hack={h} />)}
+              {advice.data.indoor_hacks.map((h) => <HackCard key={h.tip} hack={h} />)}
             </div>
           </>
         )}

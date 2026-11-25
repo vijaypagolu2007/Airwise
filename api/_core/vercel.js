@@ -7,7 +7,10 @@ import { API_HEADERS, runPost } from './http.js'
  * @param {(body: unknown) => Promise<{ status: number, body: unknown }>} handler
  */
 export function vercelPost(scope, handler) {
-  /** @param {any} req @param {any} res */
+  /**
+   * @param {import('node:http').IncomingMessage & { body?: unknown }} req
+   * @param {import('node:http').ServerResponse} res
+   */
   return async function (req, res) {
     let body
     try {

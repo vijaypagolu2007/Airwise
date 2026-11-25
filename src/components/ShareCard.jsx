@@ -30,7 +30,7 @@ export default function ShareCard({ city, aqi, actions, lang = 'en' }) {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><UsersFour size={18} weight="duotone" aria-hidden="true" /> Community card</div>
       <div className="mt-1 text-lg font-semibold">{t.title} — {city}: <span style={{ color: band.color }}>AQI {aqi} ({band.label})</span></div>
       <div className="mt-2 text-sm font-medium">{t.actions}</div>
-      <ol className="ml-5 list-decimal text-sm text-slate-700">{actions.map((a, i) => <li key={i}>{a}</li>)}</ol>
+      <ol className="ml-5 list-decimal text-sm text-slate-700">{actions.map((a) => <li key={a}>{a}</li>)}</ol>
       <div className="mt-4 flex gap-2">
         <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer" className="btn bg-emerald-700 px-3 py-2 text-sm text-white hover:bg-emerald-800"><WhatsappLogo size={18} weight="fill" aria-hidden="true" />{t.share}</a>
         <button onClick={copy} className="btn btn-ghost px-3 py-2 text-sm">{copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{copied ? t.copied : t.copy}</button>

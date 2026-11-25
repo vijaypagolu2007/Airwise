@@ -110,6 +110,15 @@ describe('normalizeAdvice: small model slips do not discard a good plan', async 
     expect(n.translated.topActions).toHaveLength(3)
   })
 
+  it('drops repeated routine steps, tips and actions so each one keys uniquely in the UI', () => {
+    const step = { time: '07:00', activity: 'Walk', reason: 'Cleanest hour' }
+    const tip = { tip: 'Close windows', why: 'Keeps PM out', effort: 'low' }
+    const n = normalizeAdvice({ ...base, routine: [step, { ...step, reason: 'again' }], indoor_hacks: [tip, tip], translated: { summary: 's', topActions: ['a', 'a', 'b'] } })
+    expect(n.routine).toHaveLength(1)
+    expect(n.indoor_hacks).toHaveLength(1)
+    expect(n.translated.topActions).toEqual(['a', 'b'])
+  })
+
   it('drops an unusable translation instead of failing', () => {
     expect(normalizeAdvice({ ...base, translated: { summary: '' } }).translated).toBeUndefined()
     expect(normalizeAdvice({ ...base, translated: { summary: 'x', topActions: [] } }).translated).toBeUndefined()

@@ -125,6 +125,52 @@ function run(schema, json) {
 
 /** @param {unknown} json */
 export const validateProfile = (json) => run(ProfileSchema, json)
+
+const WHOLE_NUMBER = 'Enter a whole number, 0 or more'
+/** Form fields that show their own error, with the plain-language message each one shows. */
+export const FIELD_MESSAGES = /** @type {const} */ ({
+  adults: WHOLE_NUMBER,
+  kids: WHOLE_NUMBER,
+  elderly: WHOLE_NUMBER,
+  plants: WHOLE_NUMBER,
+  distanceKm: 'Distance must be more than 0 km',
+})
+/** @typedef {keyof typeof FIELD_MESSAGES | 'form'} ProfileField */
+
+/** The profile form's rules: the shared ProfileSchema plus two that only make sense when a person fills it in. */
+export const ProfileFormSchema = ProfileSchema.superRefine((p, ctx) => {
+  const { adults, kids, elderly } = p.household
+  if (adults + kids + elderly === 0) {
+    ctx.addIssue({ code: 'custom', path: ['household', 'adults'], message: 'Add at least one household member' })
+  }
+  if (p.commute.mode !== 'work_from_home' && p.commute.distanceKm <= 0) {
+    ctx.addIssue({ code: 'custom', path: ['commute', 'distanceKm'], message: FIELD_MESSAGES.distanceKm })
+  }
+})
+
+/**
+ * Validate a submitted profile form and map each problem to the field that shows it.
+ * The first problem per field wins; anything not tied to a field is joined under `form`.
+ * @param {unknown} json
+ * @returns {{ ok: true, data: z.infer<typeof ProfileSchema> } | { ok: false, errors: Partial<Record<ProfileField, string>> }}
+ */
+export function validateProfileFields(json) {
+  const r = ProfileFormSchema.safeParse(json)
+  if (r.success) return { ok: true, data: r.data }
+  /** @type {Partial<Record<ProfileField, string>>} */
+  const errors = {}
+  for (const issue of r.error.issues) {
+    const name = String(issue.path.at(-1) ?? '')
+    if (name in FIELD_MESSAGES) {
+      const field = /** @type {keyof typeof FIELD_MESSAGES} */ (name)
+      errors[field] ??= issue.code === 'custom' ? issue.message : FIELD_MESSAGES[field]
+    } else {
+      const text = `${issue.path.join('.') || '(root)'}: ${issue.message}`
+      errors.form = errors.form ? `${errors.form}; ${text}` : text
+    }
+  }
+  return { ok: false, errors }
+}
 /** @param {unknown} json */
 export const validateAdvice = (json) => run(AdviceSchema, json)
 /** @param {unknown} json */

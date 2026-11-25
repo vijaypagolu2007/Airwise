@@ -19,6 +19,7 @@
   "include": [
     "tools/**/*.js",
     "src/lib/**/*.js",
-    "api/**/*.js"
+    "api/**/*.js",
+    "server.js"
   ]
 }

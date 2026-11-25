@@ -2,6 +2,8 @@
 // Pure geometry for the dependency-free SVG forecast chart (ForecastChart.jsx). Kept separate so it is type-checked
 // and unit-tested without a DOM.
 
+import { WHO_PM25_24H } from './defaults.js'
+
 /** @typedef {{ time: string, pm25: number | null, aqi: number | null }} Point */
 
 export const CHART = /** @type {const} */ ({ width: 800, height: 320, top: 24, right: 44, bottom: 28, left: 44 })
@@ -71,7 +73,7 @@ export function buildChart(points) {
   const n = Math.max(points.length - 1, 1)
   const pm = points.map((p) => p.pm25)
   const aqi = points.map((p) => p.aqi)
-  const pmMax = niceMax(Math.max(15, ...pm.map((v) => v ?? 0)))
+  const pmMax = niceMax(Math.max(WHO_PM25_24H, ...pm.map((v) => v ?? 0)))
   const aqiMax = niceMax(Math.max(...aqi.map((v) => v ?? 0)))
   const x = (/** @type {number} */ i) => left + (i / n) * plotW
   const yPm = (/** @type {number} */ v) => base - (v / pmMax) * plotH
@@ -84,7 +86,7 @@ export function buildChart(points) {
     aqiLine: linePath(aqi, x, yAqi),
     pmTicks: ticks.map((t) => ({ y: base - t * plotH, label: String(Math.round(t * pmMax)) })),
     aqiTicks: ticks.map((t) => ({ y: base - t * plotH, label: String(Math.round(t * aqiMax)) })),
-    whoY: yPm(15),
+    whoY: yPm(WHO_PM25_24H),
     /** Index of the point nearest a horizontal pixel position in viewBox units. */
     indexAt: (/** @type {number} */ px) => Math.min(points.length - 1, Math.max(0, Math.round(((px - left) / plotW) * n))),
   }

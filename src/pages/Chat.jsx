@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import ChatBox from '../components/ChatBox.jsx'
 import PromptPanel from '../components/PromptPanel.jsx'
 import { RiskBadge } from '../components/ui.jsx'
@@ -10,25 +10,28 @@ import { aqiToRisk, bandForAqi } from '../lib/aqiBands.js'
 function Body() {
   const { place, air } = useLoadedAir()
   const { profile } = useProfile()
-  const [messages, setMessages] = useState(/** @type {{ role: string, content: string, source?: string, error?: string }[]} */ ([]))
+  const [messages, setMessages] = useState(/** @type {import('../components/ChatBox.jsx').ChatMessage[]} */ ([]))
+  // Messages are only ever appended; a running counter gives each a stable React key.
+  const nextId = useRef(0)
+  const newId = () => ++nextId.current
   const [sending, setSending] = useState(false)
   const [last, setLast] = useState(/** @type {{ source: string, prompt: string | null, reply?: string, error?: string } | null} */ (null))
 
   /** @param {string} question */
   async function send(question) {
     const history = messages.slice(-12).map((m) => ({ role: m.role, content: m.content }))
-    setMessages((m) => [...m, { role: 'user', content: question }])
+    setMessages((m) => [...m, { id: newId(), role: 'user', content: question }])
     setSending(true)
     try {
       const r = await postChat({ ...buildContext(place, air, profile), question, history })
-      setMessages((m) => [...m, { role: 'model', content: r.reply, source: r.source, error: r.error }])
+      setMessages((m) => [...m, { id: newId(), role: 'model', content: r.reply, source: r.source, error: r.error }])
       setLast(r)
     } catch (err) {
       const e = err instanceof Error ? err : new Error('API_UNREACHABLE')
       const aqi = air.current.aqi
       const why = e.message === 'BOT_CHECK_FAILED' ? "I couldn't confirm this request came from a person." : "I couldn't reach the AirWise server."
       const reply = `${why} Rule-based answer: AQI in ${place.name} is ${aqi} (${bandForAqi(aqi).label}, ${aqiToRisk(aqi)} risk). For health symptoms please consult a doctor.`
-      setMessages((m) => [...m, { role: 'model', content: reply, source: 'fallback', error: e.message }])
+      setMessages((m) => [...m, { id: newId(), role: 'model', content: reply, source: 'fallback', error: e.message }])
       setLast({ source: 'fallback', prompt: null, error: e.message })
     } finally {
       setSending(false)

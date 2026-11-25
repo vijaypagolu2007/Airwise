@@ -18,35 +18,49 @@ const isText = (/** @type {unknown} */ v) => typeof v === 'string' && v.trim().l
 /** @param {unknown} v */
 const asArray = (v) => (Array.isArray(v) ? v : [])
 
+/** @param {unknown} v @returns {v is Record<string, unknown>} */
+const isRecord = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
+/** @param {unknown} e */
+const effortLevel = (e) => {
+  const v = String(e ?? '').toLowerCase().trim()
+  return v.startsWith('low') ? 'low' : v.startsWith('high') ? 'high' : 'med'
+}
+/**
+ * Keep the first item per key: repeated items add nothing and would collide as React keys in the UI.
+ * @template T @param {T[]} items @param {(item: T) => string} key
+ */
+const uniqueBy = (items, key) => {
+  const seen = new Set()
+  return items.filter((item) => !seen.has(key(item)) && Boolean(seen.add(key(item))))
+}
+const RISK_LEVELS = ['low', 'moderate', 'high', 'severe']
+
 /**
  * Repair the small slips a model makes before strict validation, so one stray value
- * (risk "poor", effort "medium", an invented swap id, an extra item) doesn't throw away a good plan.
+ * (risk "poor", effort "medium", an invented swap id, an extra or repeated item) doesn't throw away a good plan.
  * Shape errors that can't be repaired (no summary, wrong types) still fail validation.
- * @param {any} a
+ * @param {unknown} a
+ * @returns {unknown}
  */
 export function normalizeAdvice(a) {
-  if (!a || typeof a !== 'object' || Array.isArray(a)) return a
-  const effort = (/** @type {unknown} */ e) => {
-    const v = String(e ?? '').toLowerCase().trim()
-    return v.startsWith('low') ? 'low' : v.startsWith('high') ? 'high' : 'med'
-  }
+  if (!isRecord(a)) return a
+  const routine = asArray(a.routine).filter((r) => isRecord(r) && isText(r.time) && isText(r.activity) && isText(r.reason))
+  const hacks = asArray(a.indoor_hacks).filter((h) => isRecord(h) && isText(h.tip) && isText(h.why))
+  const swaps = asArray(a.swaps).filter((w) => isRecord(w) && SWAP_IDS.includes(String(w.id)) && isText(w.from) && isText(w.to) && isText(w.impact_explained))
+  /** @type {Record<string, unknown>} */
   const out = {
     ...a,
     // Overridden from the CPCB band after validation anyway; any value the model picks is placeholder.
-    risk_level: ['low', 'moderate', 'high', 'severe'].includes(a.risk_level) ? a.risk_level : 'moderate',
-    routine: asArray(a.routine).filter((r) => r && isText(r.time) && isText(r.activity) && isText(r.reason)).slice(0, 12),
-    indoor_hacks: asArray(a.indoor_hacks)
-      .filter((h) => h && isText(h.tip) && isText(h.why))
-      .map((h) => ({ ...h, effort: effort(h.effort) }))
-      .slice(0, 8),
-    swaps: asArray(a.swaps)
-      .filter((w) => w && SWAP_IDS.includes(w.id) && isText(w.from) && isText(w.to) && isText(w.impact_explained))
-      .slice(0, 6),
+    risk_level: RISK_LEVELS.includes(String(a.risk_level)) ? a.risk_level : 'moderate',
+    routine: uniqueBy(routine, (r) => `${r.time} ${r.activity}`).slice(0, 12),
+    indoor_hacks: uniqueBy(hacks, (h) => String(h.tip)).map((h) => ({ ...h, effort: effortLevel(h.effort) })).slice(0, 8),
+    swaps: swaps.slice(0, 6),
   }
   const t = a.translated
-  if (t && isText(t.summary)) {
-    out.translated = { summary: t.summary, topActions: asArray(t.topActions).filter(isText).slice(0, 3) }
-    if (out.translated.topActions.length === 0) delete out.translated
+  if (isRecord(t) && isText(t.summary)) {
+    const topActions = uniqueBy(asArray(t.topActions).filter(isText), String).slice(0, 3)
+    if (topActions.length > 0) out.translated = { summary: t.summary, topActions }
+    else delete out.translated
   } else delete out.translated
   return out
 }

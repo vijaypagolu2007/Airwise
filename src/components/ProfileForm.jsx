@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { COMMUTE_MODES, FUELS } from '../lib/defaults.js'
-import { validateProfile } from '../lib/validate.js'
+import { validateProfileFields } from '../lib/validate.js'
 import { UsersThree, Train, House, PersonSimpleWalk } from '@phosphor-icons/react'
 
 /** @typedef {import('../lib/types.js').Profile} Profile */
@@ -71,7 +71,7 @@ function Group({ title, icon: Icon, children }) {
 /** @param {{ initial: Profile, onSave: (p: Profile) => void, submitText?: string }} props */
 export default function ProfileForm({ initial, onSave, submitText = 'Save profile' }) {
   const [p, setP] = useState(() => /** @type {ProfileDraft} */ (structuredClone(initial)))
-  const [errors, setErrors] = useState(/** @type {Record<string, string>} */ ({}))
+  const [errors, setErrors] = useState(/** @type {Partial<Record<import('../lib/validate.js').ProfileField, string>>} */ ({}))
   /** @param {Section} section @param {string} key @returns {(v: string | boolean) => void} */
   const set = (section, key) => (v) => setP((prev) => /** @type {ProfileDraft} */ ({ ...prev, [section]: { ...prev[section], [key]: v } }))
 
@@ -86,24 +86,12 @@ export default function ProfileForm({ initial, onSave, submitText = 'Save profil
       commute: { ...p.commute, distanceKm: toNum(p.commute.distanceKm) },
       home: { ...p.home, plants: toNum(p.home.plants) },
     }
-    /** @type {Record<string, string>} */
-    const errs = {}
-    for (const k of /** @type {const} */ (['adults', 'kids', 'elderly'])) {
-      const v = candidate.household[k]
-      if (!Number.isInteger(v) || v < 0) errs[k] = 'Enter a whole number, 0 or more'
-    }
-    const members = (candidate.household.adults || 0) + (candidate.household.kids || 0) + (candidate.household.elderly || 0)
-    if (!errs.adults && members === 0) errs.adults = 'Add at least one household member'
-    const d = candidate.commute.distanceKm
-    if (candidate.commute.mode !== 'work_from_home' && !(d > 0)) errs.distanceKm = 'Distance must be more than 0 km'
-    if (candidate.commute.mode === 'work_from_home' && !(d >= 0)) candidate.commute.distanceKm = 0
-    if (!Number.isInteger(candidate.home.plants) || candidate.home.plants < 0) errs.plants = 'Enter a whole number, 0 or more'
-    if (Object.keys(errs).length === 0) {
-      const v = validateProfile(candidate)
-      if (!v.ok) errs.form = v.errors.join('; ')
-    }
-    setErrors(errs)
-    if (Object.keys(errs).length === 0) onSave(candidate)
+    // Working from home has no commute, so a blank or negative distance just means none.
+    if (candidate.commute.mode === 'work_from_home' && !(candidate.commute.distanceKm >= 0)) candidate.commute.distanceKm = 0
+    // Every rule lives in src/lib/validate.js (the same zod schema the API enforces); the form only shows the messages.
+    const result = validateProfileFields(candidate)
+    setErrors(result.ok ? {} : result.errors)
+    if (result.ok) onSave(result.data)
   }
 
   const h = p.household, c = p.commute, home = p.home, o = p.outdoor

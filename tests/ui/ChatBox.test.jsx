@@ -36,7 +36,7 @@ describe('ChatBox', () => {
       <ChatBox
         sending
         onSend={vi.fn()}
-        messages={[{ role: 'user', content: 'Safe at 5?' }, { role: 'model', content: 'No, wait until 3 pm.', source: 'fallback', error: 'AI_BUSY' }]}
+        messages={[{ id: 1, role: 'user', content: 'Safe at 5?' }, { id: 2, role: 'model', content: 'No, wait until 3 pm.', source: 'fallback', error: 'AI_BUSY' }]}
       />,
     )
     const log = screen.getByRole('log')
@@ -48,7 +48,7 @@ describe('ChatBox', () => {
   })
 
   it('has no axe violations', async () => {
-    const { container } = render(<ChatBox messages={[{ role: 'user', content: 'hi' }]} onSend={vi.fn()} sending={false} />)
+    const { container } = render(<ChatBox messages={[{ id: 1, role: 'user', content: 'hi' }]} onSend={vi.fn()} sending={false} />)
     expect(await axeViolations(container)).toEqual([])
   })
 })

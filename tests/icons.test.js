@@ -1,16 +1,36 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { parseAst } from 'vite'
 import { stripWeights, phosphorWeights, KEEP_WEIGHTS } from '../tools/phosphorWeights.js'
 
 const DEFS = 'node_modules/@phosphor-icons/react/dist/defs'
 
-/** Evaluate a defs module with a stub React and return its weight → element map. */
-function load(code) {
-  const body = code
-    .replace(/import \* as (\w+) from "react";/, 'const $1 = R;')
-    .replace(/export \{\s*(\w+) as default\s*\};?/, 'return $1;')
-  return new Function('R', body)({ createElement: (...a) => a, Fragment: 'F' })
+/**
+ * Read a defs module's weight → element map from its syntax tree (no evaluation): the module is
+ * `new Map([["bold", <element>], ...])`, so each entry's element is compared as its exact source text.
+ * Parsing also proves the stripped module is still valid JavaScript.
+ * @param {string} code
+ * @returns {Map<string, string>}
+ */
+function weights(code) {
+  /** @type {Map<string, string>} */
+  const out = new Map()
+  /** @typedef {{ type?: string, start: number, end: number, value?: string, name?: string, callee?: AstNode, arguments?: AstNode[], elements?: AstNode[] }} AstNode */
+  /** @param {AstNode} node */
+  const visit = (node) => {
+    if (!node || typeof node !== 'object') return
+    if (node.type === 'NewExpression' && node.callee?.name === 'Map' && node.arguments?.[0]?.type === 'ArrayExpression') {
+      for (const entry of node.arguments[0].elements ?? []) {
+        const [key, value] = entry.elements ?? []
+        out.set(String(key.value), code.slice(value.start, value.end))
+      }
+      return
+    }
+    for (const child of Object.values(node)) Array.isArray(child) ? child.forEach(visit) : visit(/** @type {AstNode} */ (child))
+  }
+  visit(/** @type {AstNode} */ (/** @type {unknown} */ (parseAst(code))))
+  return out
 }
 
 /** @param {string} dir @returns {string[]} */
@@ -30,11 +50,11 @@ describe('phosphor weight stripping', () => {
     const problems = []
     for (const name of names) {
       const src = readFileSync(join(DEFS, `${name}.es.js`), 'utf8')
-      const before = load(src)
-      const after = load(stripWeights(src))
+      const before = weights(src)
+      const after = weights(stripWeights(src))
       if ([...after.keys()].sort().join(',') !== want) problems.push(`${name}: ${[...after.keys()]}`)
       for (const w of KEEP_WEIGHTS) {
-        if (JSON.stringify(after.get(w)) !== JSON.stringify(before.get(w))) problems.push(`${name} ${w} changed`)
+        if (!before.get(w) || after.get(w) !== before.get(w)) problems.push(`${name} ${w} changed`)
       }
     }
     expect(problems).toEqual([])

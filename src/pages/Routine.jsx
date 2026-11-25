@@ -23,7 +23,7 @@ function Body() {
               {d.translated && (
                 <Panel icon={ListChecks} title="Top actions">
                   <p className="font-medium">{d.translated.summary}</p>
-                  <ul className="ml-5 mt-2 list-disc text-sm">{d.translated.topActions.map((a, i) => <li key={i}>{a}</li>)}</ul>
+                  <ul className="ml-5 mt-2 list-disc text-sm">{d.translated.topActions.map((a) => <li key={a}>{a}</li>)}</ul>
                 </Panel>
               )}
             </div>

@@ -6,8 +6,10 @@ const SAMPLES = [
   'Is my asthma medication plan affected today?',
 ]
 
+/** @typedef {{ id: number, role: string, content: string, source?: string, error?: string }} ChatMessage */
+
 /**
- * @param {{ messages: { role: string, content: string, source?: string, error?: string }[], onSend: (q: string) => void, sending: boolean }} props
+ * @param {{ messages: ChatMessage[], onSend: (q: string) => void, sending: boolean }} props
  */
 export default function ChatBox({ messages, onSend, sending }) {
   const [q, setQ] = useState('')
@@ -31,8 +33,8 @@ export default function ChatBox({ messages, onSend, sending }) {
     <div className="card flex h-full min-h-[24rem] flex-col">
       <div className="flex-1 space-y-3 overflow-y-auto p-4" role="log" aria-live="polite" aria-label="Conversation with AirWise">
         {messages.length === 0 && <p className="text-center text-sm text-slate-600">Ask anything about today's air for your family.</p>}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+        {messages.map((m) => (
+          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 ${m.role === 'user' ? 'bg-primary-strong text-white' : 'bg-muted'}`}>
               <span className="sr-only">{m.role === 'user' ? 'You: ' : 'AirWise: '}</span>
               {m.content}

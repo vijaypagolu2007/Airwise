@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { bestHour, worstHour } from '../lib/airApi.js'
 import { CHART, buildChart } from '../lib/chartGeometry.js'
+import { WHO_PM25_24H } from '../lib/defaults.js'
 
 // Hand-drawn SVG instead of a chart library: one chart does not justify a 400 kB dependency.
 /** @param {import('../lib/types.js').HourEntry} e */
@@ -97,7 +98,7 @@ export default function ForecastChart({ hourly }) {
           </defs>
           <g fontSize="11" fill="#475569">
             {g.pmTicks.map((t, i) => (
-              <g key={i}>
+              <g key={t.label}>
                 <line x1={CHART.left} x2={CHART.width - CHART.right} y1={t.y} y2={t.y} stroke="#d6e9f5" strokeDasharray="3 3" />
                 <text x={CHART.left - 6} y={t.y + 4} textAnchor="end">{t.label}</text>
                 <text x={CHART.width - CHART.right + 6} y={t.y + 4}>{g.aqiTicks[i].label}</text>
@@ -106,7 +107,7 @@ export default function ForecastChart({ hourly }) {
             {hourly.map((e, i) => (i % 6 === 0 ? <text key={e.time} x={g.x(i)} y={CHART.height - 8} textAnchor="middle">{lbl(e)}</text> : null))}
           </g>
           <line x1={CHART.left} x2={CHART.width - CHART.right} y1={g.whoY} y2={g.whoY} stroke="#16a34a" strokeDasharray="2 4" />
-          <text x={CHART.left + 4} y={g.whoY - 4} fontSize="10" fill="#15803d">WHO 15</text>
+          <text x={CHART.left + 4} y={g.whoY - 4} fontSize="10" fill="#15803d">{`WHO ${WHO_PM25_24H}`}</text>
           <path d={g.pmArea} fill="url(#pmFill)" />
           <path d={g.pmLine} fill="none" stroke={PM} strokeWidth="2.5" />
           <path d={g.aqiLine} fill="none" stroke={AQI} strokeWidth="2" strokeDasharray="6 4" />

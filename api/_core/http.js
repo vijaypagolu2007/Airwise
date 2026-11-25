@@ -4,6 +4,12 @@
 import { kvPipeline } from './kv.js'
 import { verifyTurnstile } from './turnstile.js'
 
+/**
+ * A Node header can arrive as a string, a repeated-header array, or not at all; take the first value.
+ * @param {string | string[] | undefined} value
+ */
+export const firstHeader = (value) => (Array.isArray(value) ? value[0] : value) ?? ''
+
 export const MAX_BODY_BYTES = 64 * 1024
 
 /** Requests per IP per minute. Each advise/chat call can cost a Gemini request on the free tier. */
@@ -66,9 +72,8 @@ export const resetRateLimits = () => windows.clear()
  * @param {string | undefined} [socketAddress]
  */
 export function clientIp(headers, socketAddress) {
-  const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
-  const real = one(headers['x-real-ip']).trim()
-  const hops = one(headers['x-forwarded-for']).split(',').map((h) => h.trim()).filter(Boolean)
+  const real = firstHeader(headers['x-real-ip']).trim()
+  const hops = firstHeader(headers['x-forwarded-for']).split(',').map((h) => h.trim()).filter(Boolean)
   return (real || hops[hops.length - 1] || socketAddress || 'local').slice(0, 64)
 }
 
@@ -79,18 +84,17 @@ export function clientIp(headers, socketAddress) {
  * @param {Record<string, string | string[] | undefined>} headers
  */
 export function originAllowed(headers) {
-  const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
   const prod = process.env.NODE_ENV === 'production'
-  const origin = one(headers.origin).trim()
+  const origin = firstHeader(headers.origin).trim()
   if (!origin) return !prod
   const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
   if (allowed.includes(origin)) return true
-  if (one(headers['sec-fetch-site']) === 'cross-site') return false
+  if (firstHeader(headers['sec-fetch-site']) === 'cross-site') return false
   let host, hostname
   try { ({ host, hostname } = new URL(origin)) } catch { return false }
   const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1'
   if (isLoopback && !prod) return true // local dev via the Vite proxy
-  const own = one(headers['x-forwarded-host']) || one(headers.host)
+  const own = firstHeader(headers['x-forwarded-host']) || firstHeader(headers.host)
   return Boolean(own && host === own.trim())
 }
 
@@ -153,8 +157,7 @@ export async function runPost(req, scope, handler) {
     return { status: 429, body: { ok: false, error: 'RATE_LIMITED', retryAfterSec: rl.retryAfterSec }, headers: { 'Retry-After': String(rl.retryAfterSec) } }
   }
   // After the rate limit, so a flood never reaches Cloudflare; before the body, so bots cost us nothing more.
-  const one = (/** @type {string | string[] | undefined} */ v) => (Array.isArray(v) ? v[0] : v) ?? ''
-  const bot = await verifyTurnstile(one(req.headers['x-turnstile-token']), scope, ip)
+  const bot = await verifyTurnstile(firstHeader(req.headers['x-turnstile-token']), scope, ip)
   if (!bot.ok) {
     log(scope, 'bot_check_failed', { reason: bot.reason })
     return { status: 403, body: { ok: false, error: 'BOT_CHECK_FAILED' } }

@@ -37,6 +37,9 @@ export const COMMUTE_MODES = [
   'work_from_home',
 ]
 
+/** WHO 2021 air quality guideline for 24-hour mean PM2.5, in µg/m³. */
+export const WHO_PM25_24H = 15
+
 export const FUELS = ['lpg', 'induction', 'kerosene', 'wood', 'coal']
 
 export const LANGUAGES = ['en', 'hi', 'te']
