@@ -85,7 +85,7 @@ pnpm dev        # app on http://localhost:5173 (proxies /api)
 ```
 Tests and build (the same checks run in GitHub Actions on every push):
 ```bash
-pnpm verify     # lint + typecheck + 182 tests with coverage + build
+pnpm verify     # lint + typecheck + 205 tests with coverage + build
 ```
 Without a key the app still works in rule-based fallback mode (shown with an amber "Fallback" badge).
 

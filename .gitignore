@@ -6,3 +6,9 @@ dist
 !.env.example
 *.local
 coverage
+
+# Patch archives and demo recordings: the video is hosted on YouTube/Drive, never in Git
+*.zip
+*.mp4
+*.mov
+*.webm

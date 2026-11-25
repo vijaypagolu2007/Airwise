@@ -13,8 +13,9 @@ function Body() {
   const [view, setView] = useState('chart')
   const best = bestHour(air.hourly)
   const worst = worstHour(air.hourly)
-  // avgPm25 returns 0 when the next 24 h carry no PM2.5 readings; show a dash then instead of "0".
-  const avg = Math.round(avgPm25(air.hourly)) || null
+  // avgPm25 returns 0 both for no readings and for clean air, so check for readings before trusting a 0.
+  const hasReadings = air.hourly.slice(0, 24).some((e) => typeof e.pm25 === 'number')
+  const avg = hasReadings ? Math.round(avgPm25(air.hourly)) : null
   /** @param {string} id @param {import('@phosphor-icons/react').Icon} Icon @param {string} text */
   const tab = (id, Icon, text) => (
     <button onClick={() => setView(id)} aria-pressed={view === id} className={`btn px-3 py-1.5 text-sm ${view === id ? 'btn-primary' : 'btn-ghost'}`}>
